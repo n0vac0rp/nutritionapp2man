@@ -7,15 +7,16 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { calculateBMI, calculateEnhancedHealthMetrics, getDailyCalorieRecommendation } from "../utils/calculations"
+import { calculateBMI, calculateEnhancedHealthMetrics, getDailyCalorieRecommendation, calculatePortionWeight } from "../utils/calculations"
 import { Calculator, TrendingUp, Target, AlertCircle, Activity } from "lucide-react"
 
 export default function BMICalculator() {
   const { user, updateProfile } = useAuth()
-  const [height, setHeight] = useState(user?.height.toString() || "")
-  const [weight, setWeight] = useState(user?.weight.toString() || "")
-  const [waistCircumference, setWaistCircumference] = useState(user?.waistCircumference?.toString() || "")
-  const [hipCircumference, setHipCircumference] = useState(user?.hipCircumference?.toString() || "")
+  const [height, setHeight] = useState(user?.height?.toString() ?? "")
+  const [weight, setWeight] = useState(user?.weight?.toString() ?? "")
+  const [waistCircumference, setWaistCircumference] = useState(user?.waistCircumference?.toString() ?? "")
+  const [hipCircumference, setHipCircumference] = useState(user?.hipCircumference?.toString() ?? "")
+  const [fistCircumference, setFistCircumference] = useState(user?.fistCircumference?.toString() ?? "")
   const [isUpdating, setIsUpdating] = useState(false)
 
   if (!user) return null
@@ -40,6 +41,20 @@ export default function BMICalculator() {
       : null
   const dailyCalories = getDailyCalorieRecommendation(user.age, user.gender, user.weight, user.height)
 
+  const currentPortionWeight = user.fistCircumference
+    ? calculatePortionWeight(currentBMI.bmi, user.fistCircumference, user.height, user.age)
+    : null
+
+  const newPortionWeight =
+    height && weight && fistCircumference
+      ? calculatePortionWeight(
+          calculateBMI(Number.parseFloat(weight), Number.parseFloat(height)).bmi,
+          Number.parseFloat(fistCircumference),
+          Number.parseFloat(height),
+          user.age,
+        )
+      : null
+
   const updateUserProfile = async () => {
     if (!height || !weight) return
 
@@ -50,6 +65,7 @@ export default function BMICalculator() {
         weight: Number.parseFloat(weight),
         waistCircumference: waistCircumference ? Number.parseFloat(waistCircumference) : undefined,
         hipCircumference: hipCircumference ? Number.parseFloat(hipCircumference) : undefined,
+        fistCircumference: fistCircumference ? Number.parseFloat(fistCircumference) : undefined,
       })
       alert("Profile updated successfully!")
     } catch (error) {
@@ -155,6 +171,19 @@ export default function BMICalculator() {
                   </Badge>
                 </div>
               )}
+              {currentPortionWeight !== null && (
+                <div className="mt-4 p-3 border rounded-lg bg-green-50 dark:bg-green-950">
+                  <div className="text-2xl font-bold mb-1 text-green-700 dark:text-green-300">
+                    {currentPortionWeight}g
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Personalised Portion Weight (Clenched Fist)
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Fist: {user.fistCircumference}cm
+                  </p>
+                </div>
+              )}
             </div>
 
             <div>
@@ -239,13 +268,28 @@ export default function BMICalculator() {
               />
               <p className="text-xs text-muted-foreground">At widest point</p>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="fist">Fist Circumference (cm)</Label>
+              <Input
+                id="fist"
+                type="number"
+                placeholder="25"
+                value={fistCircumference}
+                onChange={(e) => setFistCircumference(e.target.value)}
+                step="0.1"
+                min="5"
+                max="50"
+              />
+              <p className="text-xs text-muted-foreground">Around closed fist</p>
+            </div>
           </div>
 
           {newMetrics &&
             (height !== user.height.toString() ||
               weight !== user.weight.toString() ||
               waistCircumference !== (user.waistCircumference?.toString() || "") ||
-              hipCircumference !== (user.hipCircumference?.toString() || "")) && (
+              hipCircumference !== (user.hipCircumference?.toString() || "") ||
+              fistCircumference !== (user.fistCircumference?.toString() || "")) && (
               <div className="border rounded-lg p-4 bg-muted/50">
                 <h4 className="font-medium mb-2">New Health Calculation:</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -284,6 +328,12 @@ export default function BMICalculator() {
                       </Badge>
                     </div>
                   )}
+                  {newPortionWeight !== null && (
+                    <div>
+                      <div className="text-2xl font-bold text-green-700 dark:text-green-300">{newPortionWeight}g</div>
+                      <p className="text-sm text-muted-foreground">Portion Weight (Fist)</p>
+                    </div>
+                  )}
                 </div>
                 <div className="mt-3">
                   <Badge className={getRiskColor(newMetrics.overallRisk)}>Overall Risk: {newMetrics.overallRisk}</Badge>
@@ -300,7 +350,8 @@ export default function BMICalculator() {
               (height === user.height.toString() &&
                 weight === user.weight.toString() &&
                 waistCircumference === (user.waistCircumference?.toString() || "") &&
-                hipCircumference === (user.hipCircumference?.toString() || ""))
+                hipCircumference === (user.hipCircumference?.toString() || "") &&
+                fistCircumference === (user.fistCircumference?.toString() || ""))
             }
             className="w-full bg-green-600 hover:bg-green-700"
           >

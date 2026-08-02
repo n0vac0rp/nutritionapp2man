@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Star, Heart } from "lucide-react"
@@ -13,6 +13,10 @@ interface RatingDialogProps {
 
 export default function RatingDialog({ isOpen, onClose, userId }: RatingDialogProps) {
   const [showThankYou, setShowThankYou] = useState(false)
+
+  const handleRated = useCallback(() => {
+    onClose()
+  }, [onClose])
 
   useEffect(() => {
     // Check if user just returned from rating
@@ -29,23 +33,13 @@ export default function RatingDialog({ isOpen, onClose, userId }: RatingDialogPr
         handleRated()
       }, 3000)
     }
-  }, [])
+  }, [handleRated])
 
   const handleRateApp = () => {
-    // Mark as rated in localStorage
-    localStorage.setItem(`app_rated_${userId}`, "true")
-
-    // Redirect to Google Forms with return URL
     const returnUrl = encodeURIComponent(`${window.location.origin}?from_rating=true`)
     const formsUrl = `https://docs.google.com/forms/d/e/1FAIpQLSdMOYA5vqqvMsUTUOwDd3O1cT9yb3YhXauSX59h0MGZF6tMfw/viewform?entry.return_url=${returnUrl}`
 
     window.open(formsUrl, "_blank")
-    onClose()
-  }
-
-  const handleRated = () => {
-    // Mark as rated in localStorage
-    localStorage.setItem(`app_rated_${userId}`, "true")
     onClose()
   }
 

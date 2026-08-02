@@ -218,9 +218,9 @@ export function calculateWHR(
 export function calculateEnhancedHealthMetrics(
   weight: number,
   height: number,
-  waistCircumference?: number,
-  hipCircumference?: number, // Added hip circumference parameter
-  gender?: "male" | "female" | "other", // Added gender parameter for WHR calculation
+  waistCircumference?: number | null,
+  hipCircumference?: number | null,
+  gender?: "male" | "female" | "other" | null,
 ): {
   bmi: BMIResult
   waistToHeight?: WaistToHeightResult
@@ -310,6 +310,18 @@ export function calculateNutrition(
     iron: Number((ironPer100g * multiplier).toFixed(2)),
     vitaminA: Number((vitaminAPer100g * multiplier).toFixed(1)),
   }
+}
+
+export function calculatePortionWeight(
+  bmi: number,
+  fistCircumference: number,
+  height: number,
+  age: number,
+): number {
+  const heightInMeters = height / 100
+  return Number(
+    (-393.0574 + 1.0493 * bmi + 15.4316 * fistCircumference + 153.4906 * heightInMeters + 0.768 * age).toFixed(1),
+  )
 }
 
 export function getDailyCalorieRecommendation(

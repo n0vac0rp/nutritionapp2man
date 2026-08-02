@@ -3,6 +3,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Hand } from "lucide-react"
 import Image from "next/image"
+import { useAuth } from "../contexts/auth-context"
+import { calculateBMI, calculatePortionWeight } from "../utils/calculations"
 
 interface PortionSize {
   id: string
@@ -87,8 +89,43 @@ const portionSizes: PortionSize[] = [
 ]
 
 export default function PortionSizingGuide() {
+  const { user } = useAuth()
+
+  const portionWeight =
+    user?.fistCircumference
+      ? calculatePortionWeight(
+          calculateBMI(user.weight, user.height).bmi,
+          user.fistCircumference,
+          user.height,
+          user.age,
+        )
+      : null
+
   return (
     <div className="space-y-6">
+      {portionWeight !== null && (
+        <Card className="border-green-200 dark:border-green-800">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Hand className="h-5 w-5 text-green-600" />
+              Your Personalised Portion Weight
+            </CardTitle>
+            <CardDescription>
+              Based on your BMI, fist circumference, height, and age
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-green-700 dark:text-green-300">
+                {portionWeight}g
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                This is your estimated clenched fist portion weight. One fist-sized serving of food equals approximately {portionWeight}g.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

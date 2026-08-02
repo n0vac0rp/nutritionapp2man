@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { calculateBMI, getDailyCalorieRecommendation } from "../utils/calculations"
 import { User, Calendar, TrendingUp, Clock, BarChart3, PieChart } from "lucide-react"
-import type { Meal } from "@/lib/local-storage"
+import type { Meal } from "../hooks/use-meals"
 
 interface WeekData {
   weekNumber: number
@@ -79,8 +79,8 @@ export default function UserProfileDetails() {
         const dateString = currentDay.toISOString().split("T")[0]
         const dayMeals = meals.filter((meal) => meal.date === dateString)
 
-        const totalCalories = dayMeals.reduce((sum, meal) => sum + meal.totalNutrition.calories, 0)
-        const totalProtein = dayMeals.reduce((sum, meal) => sum + meal.totalNutrition.protein, 0)
+        const totalCalories = dayMeals.reduce((sum, meal) => sum + (meal.totalNutrition?.calories ?? 0), 0)
+        const totalProtein = dayMeals.reduce((sum, meal) => sum + (meal.totalNutrition?.protein ?? 0), 0)
 
         days.push({
           date: dateString,
@@ -112,13 +112,13 @@ export default function UserProfileDetails() {
   // Calculate monthly totals
   const monthlyTotals = meals.reduce(
     (totals, meal) => ({
-      calories: totals.calories + meal.totalNutrition.calories,
-      protein: totals.protein + meal.totalNutrition.protein,
-      carbs: totals.carbs + meal.totalNutrition.carbs,
-      fats: totals.fats + meal.totalNutrition.fats,
-      fiber: totals.fiber + meal.totalNutrition.fiber,
-      iron: totals.iron + meal.totalNutrition.iron,
-      vitaminA: totals.vitaminA + meal.totalNutrition.vitaminA,
+      calories: totals.calories + (meal.totalNutrition?.calories ?? 0),
+      protein: totals.protein + (meal.totalNutrition?.protein ?? 0),
+      carbs: totals.carbs + (meal.totalNutrition?.carbs ?? 0),
+      fats: totals.fats + (meal.totalNutrition?.fats ?? 0),
+      fiber: totals.fiber + (meal.totalNutrition?.fiber ?? 0),
+      iron: totals.iron + (meal.totalNutrition?.iron ?? 0),
+      vitaminA: totals.vitaminA + (meal.totalNutrition?.vitaminA ?? 0),
       meals: totals.meals + 1,
     }),
     { calories: 0, protein: 0, carbs: 0, fats: 0, fiber: 0, iron: 0, vitaminA: 0, meals: 0 },
@@ -160,7 +160,7 @@ export default function UserProfileDetails() {
             <Avatar className="h-24 w-24">
               <AvatarImage src="/placeholder.svg?height=96&width=96" />
               <AvatarFallback className="bg-green-600 text-white text-xl">
-                {user.fullName
+                {(user.fullName || "")
                   .split(" ")
                   .map((n) => n[0])
                   .join("")
@@ -194,11 +194,11 @@ export default function UserProfileDetails() {
 
               <div className="flex flex-wrap gap-2">
                 <Badge variant={bmiResult.category === "Normal" ? "default" : "secondary"}>{bmiResult.category}</Badge>
-                <Badge variant="outline">{user.gender.charAt(0).toUpperCase() + user.gender.slice(1)}</Badge>
+                <Badge variant="outline">{(user.gender || "").charAt(0).toUpperCase() + (user.gender || "").slice(1)}</Badge>
                 <Badge variant="outline">Target: {dailyCalories} cal/day</Badge>
-                {profile?.preferences.culturalBackground.map((bg) => (
+                {profile?.culturalBackground.map((bg) => (
                   <Badge key={bg} variant="outline">
-                    {bg.charAt(0).toUpperCase() + bg.slice(1)}
+                    {(bg || "").charAt(0).toUpperCase() + (bg || "").slice(1)}
                   </Badge>
                 ))}
               </div>
@@ -418,10 +418,10 @@ export default function UserProfileDetails() {
                                 </div>
                                 <div className="text-right">
                                   <div className="text-sm font-medium">
-                                    {meal.totalNutrition.calories.toFixed(0)} cal
+                                    {(meal.totalNutrition?.calories ?? 0).toFixed(0)} cal
                                   </div>
                                   <div className="text-xs text-muted-foreground">
-                                    {meal.totalNutrition.protein.toFixed(1)}g protein
+                                    {(meal.totalNutrition?.protein ?? 0).toFixed(1)}g protein
                                   </div>
                                 </div>
                               </div>

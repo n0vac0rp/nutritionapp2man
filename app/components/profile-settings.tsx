@@ -5,7 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import { useAuth } from "../contexts/auth-context"
 import { useProfile } from "../hooks/use-profile"
-import { LocalDatabase } from "@/lib/local-storage"
+import { api, getToken } from "@/lib/api-client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -61,20 +61,20 @@ function ProfileSettingsForm() {
   const [formData, setFormData] = useState({
     fullName: user?.fullName || "",
     email: user?.email || "",
-    age: user?.age.toString() || "",
+    age: user?.age?.toString() ?? "",
     gender: user?.gender || "",
-    height: user?.height.toString() || "",
-    weight: user?.weight.toString() || "",
+    height: user?.height?.toString() ?? "",
+    weight: user?.weight?.toString() ?? "",
   })
 
   const [profileData, setProfileData] = useState({
-    culturalBackground: profile?.preferences.culturalBackground || [],
-    dietaryRestrictions: profile?.preferences.dietaryRestrictions || [],
-    activityLevel: profile?.preferences.activityLevel || "moderate",
-    healthGoals: profile?.preferences.healthGoals || [],
-    notifications: profile?.settings.notifications ?? true,
-    dataSharing: profile?.settings.dataSharing ?? false,
-    units: profile?.settings.units || "metric",
+    culturalBackground: profile?.culturalBackground || [],
+    dietaryRestrictions: profile?.dietaryRestrictions || [],
+    activityLevel: profile?.activityLevel || "moderate",
+    healthGoals: profile?.healthGoals || [],
+    notifications: profile?.notifications ?? true,
+    dataSharing: profile?.dataSharing ?? false,
+    units: profile?.units || "metric",
   })
 
   if (!user) return null
@@ -90,59 +90,20 @@ function ProfileSettingsForm() {
 
     setIsExporting(true)
     try {
-      const [year, month] = exportMonth.split("-")
-      const startDate = `${year}-${month}-01`
-      const endDate = new Date(Number.parseInt(year), Number.parseInt(month), 0).toISOString().split("T")[0]
-
-      const meals = LocalDatabase.getUserMeals(user.id, startDate, endDate)
-      const userProfile = LocalDatabase.getUserProfile(user.id)
-      const userStats = LocalDatabase.getUserStatsById(user.id)
-
-      const exportData = {
-        user: {
-          id: user.id,
-          fullName: user.fullName,
-          email: user.email,
-        },
-        meals,
-        profile: userProfile,
-        stats: userStats,
-        exportPeriod: {
-          month: Number.parseInt(month),
-          year: Number.parseInt(year),
-          startDate,
-          endDate,
-        },
-        exportDate: new Date().toISOString(),
-        totalMeals: meals.length,
-        summary: {
-          totalCalories: meals.reduce((sum, m) => sum + m.totalNutrition.calories, 0),
-          avgDailyCalories:
-            meals.length > 0
-              ? meals.reduce((sum, m) => sum + m.totalNutrition.calories, 0) / new Set(meals.map((m) => m.date)).size
-              : 0,
-          totalProtein: meals.reduce((sum, m) => sum + m.totalNutrition.protein, 0),
-          totalCarbs: meals.reduce((sum, m) => sum + m.totalNutrition.carbs, 0),
-          totalFats: meals.reduce((sum, m) => sum + m.totalNutrition.fats, 0),
-        },
-      }
-
-      const jsonString = JSON.stringify(exportData, null, 2)
-      const blob = new Blob([jsonString], { type: "application/json" })
+      const res = await fetch("/api/export", { headers: { Authorization: `Bearer ${getToken()}` } })
+      if (!res.ok) throw new Error("Export failed")
+      const blob = await res.blob()
       const url = URL.createObjectURL(blob)
-
-      const link = document.createElement("a")
-      link.href = url
-      link.download = `nutrition-logs-${year}-${month}-${user.fullName.replace(/\s+/g, "-")}.json`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `gluguide-export-${exportMonth}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
       URL.revokeObjectURL(url)
-
-      setMessage({ type: "success", text: `Monthly logs for ${month}/${year} exported successfully!` })
-      setTimeout(() => setMessage(null), 3000)
+      setMessage({ type: "success", text: "Export successful!" })
     } catch (error) {
-      setMessage({ type: "error", text: "Failed to export monthly logs" })
+      setMessage({ type: "error", text: "Failed to export data" })
     } finally {
       setIsExporting(false)
     }
@@ -207,40 +168,13 @@ function ProfileSettingsForm() {
 
       // Update user preferences
       const profileResult = await updateUserProfile({
-        preferences: {
-          culturalBackground: profileData.culturalBackground,
-          dietaryRestrictions: profileData.dietaryRestrictions,
-          activityLevel: profileData.activityLevel as "sedentary" | "light" | "moderate" | "active",
-          healthGoals: profileData.healthGoals,
-          favoriteNigerianFoods: profile?.preferences.favoriteNigerianFoods || [],
-          mealPreferences: profile?.preferences.mealPreferences || {
-            breakfast: [],
-            lunch: [],
-            dinner: [],
-            snacks: [],
-          },
-        },
-        settings: {
-          notifications: profileData.notifications,
-          dataSharing: profileData.dataSharing,
-          units: profileData.units as "metric" | "imperial",
-          reminderTimes: profile?.settings.reminderTimes || {
-            breakfast: "07:00",
-            lunch: "12:00",
-            dinner: "19:00",
-          },
-          weeklyGoals: profile?.settings.weeklyGoals || {
-            calorieTarget: 2000,
-            proteinTarget: 100,
-            exerciseDays: 3,
-          },
-        },
-        personalizedRecommendations: profile?.personalizedRecommendations || {
-          suggestedFoods: [],
-          avoidFoods: [],
-          mealPlanPreferences: "balanced_nigerian",
-          supplementSuggestions: [],
-        },
+        culturalBackground: profileData.culturalBackground,
+        dietaryRestrictions: profileData.dietaryRestrictions,
+        activityLevel: profileData.activityLevel,
+        healthGoals: profileData.healthGoals,
+        notifications: profileData.notifications,
+        dataSharing: profileData.dataSharing,
+        units: profileData.units,
       })
 
       if (profileResult.success) {
@@ -264,14 +198,9 @@ function ProfileSettingsForm() {
     reader.onload = async (e) => {
       try {
         const jsonData = e.target?.result as string
-        const result = await LocalDatabase.importUserData(jsonData)
-
-        if (result.success) {
-          setMessage({ type: "success", text: "Data imported successfully! Please refresh the page." })
-          setTimeout(() => window.location.reload(), 2000)
-        } else {
-          setMessage({ type: "error", text: result.error || "Failed to import data" })
-        }
+        await api.post("/api/import", { jsonData })
+        setMessage({ type: "success", text: "Data imported successfully! Please refresh the page." })
+        setTimeout(() => window.location.reload(), 2000)
       } catch (error) {
         setMessage({ type: "error", text: "Invalid file format" })
       }
@@ -378,17 +307,20 @@ function ProfileSettingsForm() {
             </div>
             <div className="flex items-end">
               <Button
-                onClick={() => {
-                  const data = LocalDatabase.exportUserData(user.id)
-                  const blob = new Blob([data], { type: "application/json" })
-                  const url = URL.createObjectURL(blob)
-                  const link = document.createElement("a")
-                  link.href = url
-                  link.download = `nutrition-backup-${new Date().toISOString().split("T")[0]}.json`
-                  document.body.appendChild(link)
-                  link.click()
-                  document.body.removeChild(link)
-                  URL.revokeObjectURL(url)
+                onClick={async () => {
+                  try {
+                    const res = await fetch("/api/export", { headers: { Authorization: `Bearer ${getToken()}` } })
+                    if (!res.ok) return
+                    const blob = await res.blob()
+                    const url = URL.createObjectURL(blob)
+                    const link = document.createElement("a")
+                    link.href = url
+                    link.download = `nutrition-backup-${new Date().toISOString().split("T")[0]}.json`
+                    document.body.appendChild(link)
+                    link.click()
+                    document.body.removeChild(link)
+                    URL.revokeObjectURL(url)
+                  } catch {}
                 }}
                 className="bg-green-600 hover:bg-green-700 text-white h-9 px-4 text-sm"
               >
@@ -548,7 +480,12 @@ function ProfileSettingsForm() {
               </Label>
               <Select
                 value={profileData.activityLevel}
-                onValueChange={(value) => setProfileData({ ...profileData, activityLevel: value })}
+                onValueChange={(value) =>
+                  setProfileData({
+                    ...profileData,
+                    activityLevel: value as "sedentary" | "light" | "moderate" | "active",
+                  })
+                }
               >
                 <SelectTrigger className="bg-background h-9">
                   <SelectValue />

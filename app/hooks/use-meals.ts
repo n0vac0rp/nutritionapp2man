@@ -1,129 +1,69 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "../contexts/auth-context"
-import { LocalDatabase, type Meal } from "@/lib/local-storage"
+import { api } from "@/lib/api-client"
+
+export interface MealFood {
+  id: string; mealId: string; foodId?: string | null; name: string; grams: number
+  calories: number; protein: number; carbs: number; fats: number; fiber: number; iron: number; vitaminA: number
+}
+
+export interface NutritionTotal {
+  id: string; mealId: string; calories: number; protein: number; carbs: number; fats: number; fiber: number; iron: number; vitaminA: number
+}
+
+export interface Meal {
+  id: string; userId: string; type: string; date: string; time: string
+  foods: MealFood[]; totalNutrition: NutritionTotal | null
+  mood?: string | null; notes?: string | null; createdAt: string
+}
 
 export function useMeals(date?: string, startDate?: string, endDate?: string) {
   const { user } = useAuth()
-  const [meals, setMeals] = useState<Meal[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const queryClient = useQueryClient()
 
-  const fetchMeals = useCallback(async () => {
-    if (!user) {
-      setMeals([])
-      return
-    }
+  const params = new URLSearchParams()
+  if (date) params.set("date", date)
+  if (startDate) params.set("startDate", startDate)
+  if (endDate) params.set("endDate", endDate)
 
-    setIsLoading(true)
-    setError(null)
+  const key = ["meals", user?.id, date, startDate, endDate]
 
-    try {
-      let userMeals: Meal[]
-
-      if (date) {
-        userMeals = LocalDatabase.getMealsByDate(user.id, date)
-      } else {
-        userMeals = LocalDatabase.getUserMeals(user.id, startDate, endDate)
-      }
-
-      // Sort meals by creation time (newest first)
-      userMeals.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-
-      setMeals(userMeals)
-    } catch (err) {
-      setError("Failed to fetch meals")
-      console.error("Error fetching meals:", err)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [user, date, startDate, endDate])
+  const { data: meals = [], isLoading, error } = useQuery({
+    queryKey: key,
+    queryFn: () => api.get<{ meals: Meal[] }>(`/api/meals?${params}`).then((r) => r.meals),
+    enabled: !!user,
+  })
 
   const addMeal = async (mealData: {
-    type: "breakfast" | "lunch" | "dinner" | "snack"
-    date: string
-    time: string
-    foods: any[]
+    type: string; date: string; time: string; foods: {
+      foodId?: string; name: string; grams: number
+      nutrition: { calories: number; protein: number; carbs: number; fats: number; fiber: number; iron: number; vitaminA: number }
+    }[]
   }) => {
-    if (!user) {
-      return { success: false, error: "No user logged in" }
-    }
-
+    if (!user) return { success: false, error: "No user logged in" }
     try {
-      // Calculate total nutrition
-      const totalNutrition = mealData.foods.reduce(
-        (total, food) => ({
-          calories: total.calories + (food.nutrition?.calories || 0),
-          protein: total.protein + (food.nutrition?.protein || 0),
-          carbs: total.carbs + (food.nutrition?.carbs || 0),
-          fats: total.fats + (food.nutrition?.fats || 0),
-          fiber: total.fiber + (food.nutrition?.fiber || 0),
-          iron: total.iron + (food.nutrition?.iron || 0),
-          vitaminA: total.vitaminA + (food.nutrition?.vitaminA || 0),
-        }),
-        {
-          calories: 0,
-          protein: 0,
-          carbs: 0,
-          fats: 0,
-          fiber: 0,
-          iron: 0,
-          vitaminA: 0,
-        },
-      )
-
-      const result = await LocalDatabase.createMeal({
-        userId: user.id,
-        type: mealData.type,
-        date: mealData.date,
-        time: mealData.time,
-        foods: mealData.foods,
-        totalNutrition,
-      })
-
-      if (result.success && result.meal) {
-        setMeals((prev) => [result.meal!, ...prev])
-        return { success: true, meal: result.meal }
-      } else {
-        return { success: false, error: result.error || "Failed to add meal" }
-      }
-    } catch (err) {
-      console.error("Error adding meal:", err)
-      return { success: false, error: "An unexpected error occurred" }
+      const data = await api.post<{ meal: Meal }>("/api/meals", mealData)
+      queryClient.invalidateQueries({ queryKey: ["meals", user?.id] })
+      queryClient.invalidateQueries({ queryKey: ["stats", user?.id] })
+      return { success: true, meal: data.meal }
+    } catch (err: any) {
+      return { success: false, error: err?.message || "Failed to add meal" }
     }
   }
 
   const deleteMeal = async (mealId: string) => {
-    if (!user) {
-      return { success: false, error: "No user logged in" }
-    }
-
+    if (!user) return { success: false, error: "No user logged in" }
     try {
-      const result = await LocalDatabase.deleteMeal(mealId, user.id)
-
-      if (result.success) {
-        setMeals((prev) => prev.filter((meal) => meal.id !== mealId))
-        return { success: true }
-      } else {
-        return { success: false, error: result.error || "Failed to delete meal" }
-      }
-    } catch (err) {
-      console.error("Error deleting meal:", err)
-      return { success: false, error: "An unexpected error occurred" }
+      await api.delete(`/api/meals/${mealId}`)
+      queryClient.invalidateQueries({ queryKey: ["meals", user?.id] })
+      queryClient.invalidateQueries({ queryKey: ["stats", user?.id] })
+      return { success: true }
+    } catch (err: any) {
+      return { success: false, error: err?.message || "Failed to delete meal" }
     }
   }
 
-  useEffect(() => {
-    fetchMeals()
-  }, [fetchMeals])
-
-  return {
-    meals,
-    isLoading,
-    error,
-    addMeal,
-    deleteMeal,
-    refetch: fetchMeals,
-  }
+  return { meals, isLoading, error: error ? String(error) : null, addMeal, deleteMeal, refetch: () => queryClient.invalidateQueries({ queryKey: key }) }
 }

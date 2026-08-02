@@ -19,9 +19,15 @@ yarn-error.log*
 # env files
 .env*
 
+# macOS
+.DS_Store
+**/.DS_Store
+
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+model-service/venv
+model-service/__pycache__

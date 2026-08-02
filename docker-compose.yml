@@ -1,0 +1,62 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: gluguide_user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: gluguide
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gluguide_user -d gluguide"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    mem_limit: 256m
+    mem_reservation: 128m
+
+  model-service:
+    build:
+      context: ./model-service
+    environment:
+      PORT: "3002"
+      MODEL_PATH: /app/models/food_classifier.pth
+      CLASS_NAMES_PATH: /app/models/class_names.json
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3002/health || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    mem_limit: 2g
+    mem_reservation: 512m
+
+  next-app:
+    build: .
+    ports:
+      - "3000:3000"
+    mem_limit: 512m
+    mem_reservation: 256m
+    environment:
+      DATABASE_URL: postgresql://gluguide_user:password@postgres:5432/gluguide
+      JWT_SECRET: change-me-to-a-random-64-char-string
+      JWT_EXPIRES_IN: 7d
+      MODEL_SERVICE_URL: http://model-service:3002
+      UPLOAD_MAX_SIZE_MB: "10"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      model-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+volumes:
+  pgdata:

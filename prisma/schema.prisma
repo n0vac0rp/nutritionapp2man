@@ -1,0 +1,272 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-arm64-openssl-3.0.x", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Gender {
+  male
+  female
+  other
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ActivityLevel {
+  SEDENTARY
+  LIGHT
+  MODERATE
+  ACTIVE
+}
+
+enum Units {
+  METRIC
+  IMPERIAL
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACK
+}
+
+enum Mood {
+  GREAT
+  GOOD
+  OKAY
+  POOR
+}
+
+enum SleepQuality {
+  POOR
+  FAIR
+  GOOD
+  EXCELLENT
+}
+
+model User {
+  id                 String    @id @default(uuid())
+  email              String    @unique
+  fullName           String
+  age                Int
+  gender             Gender
+  height             Float
+  weight             Float
+  waistCircumference Float?
+  hipCircumference   Float?
+  fistCircumference  Float?
+  location           String?
+  occupation         String?
+  healthConditions   String[]
+  fitnessGoals       String[]
+  role               Role      @default(USER)
+  passwordHash       String
+  tutorialCompleted  Boolean   @default(false)
+  appRated           Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  lastLoginAt        DateTime  @default(now())
+
+  profile       UserProfile?
+  stats         UserStats?
+  meals         Meal[]
+  waterIntakes  WaterIntake[]
+  sleepEntries  SleepEntry[]
+  predictions   FoodPrediction[]
+  bmiHistory    BMIHistory[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model UserProfile {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  culturalBackground String[]
+  dietaryRestrictions String[]
+  activityLevel     ActivityLevel @default(MODERATE)
+  healthGoals       String[]
+  favoriteFoods     String[]
+
+  breakfastFoods String[]
+  lunchFoods     String[]
+  dinnerFoods    String[]
+  snackFoods     String[]
+
+  notifications   Boolean  @default(true)
+  dataSharing     Boolean  @default(false)
+  units           Units    @default(METRIC)
+  breakfastReminderTime String? @default("07:00")
+  lunchReminderTime     String? @default("12:00")
+  dinnerReminderTime    String? @default("19:00")
+  weeklyCalorieTarget   Float?  @default(2000)
+  weeklyProteinTarget   Float?  @default(100)
+  weeklyExerciseDays    Int?    @default(3)
+
+  suggestedFoods        String[]
+  avoidFoods            String[]
+  mealPlanPreference    String?  @default("balanced_nigerian")
+  supplementSuggestions String[]
+
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Meal {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      MealType
+  date      DateTime @db.Date
+  time      String
+  mood      Mood?
+  notes     String?
+  createdAt DateTime @default(now())
+
+  foods          MealFood[]
+  totalNutrition NutritionTotal?
+
+  @@index([userId, date])
+  @@index([userId, createdAt])
+}
+
+model MealFood {
+  id     String @id @default(uuid())
+  mealId String
+  meal   Meal   @relation(fields: [mealId], references: [id], onDelete: Cascade)
+
+  foodId String?
+  food   NigerianFood? @relation(fields: [foodId], references: [id])
+  name   String
+  grams  Float
+
+  calories Float
+  protein  Float
+  carbs    Float
+  fats     Float
+  fiber    Float
+  iron     Float
+  vitaminA Float
+
+  @@index([mealId])
+  @@index([foodId])
+}
+
+model NutritionTotal {
+  id     String @id @default(uuid())
+  mealId String @unique
+  meal   Meal   @relation(fields: [mealId], references: [id], onDelete: Cascade)
+
+  calories Float
+  protein  Float
+  carbs    Float
+  fats     Float
+  fiber    Float
+  iron     Float
+  vitaminA Float
+}
+
+model NigerianFood {
+  id          String @id
+  name        String
+  category    String
+  description String
+  servingSize String
+  servingWeight Float
+
+  caloriesPer100g Float
+  proteinPer100g  Float
+  carbsPer100g    Float
+  fatsPer100g     Float
+  fiberPer100g    Float
+  ironPer100g     Float
+  vitaminAPer100g Float
+
+  portionCalSmall  Float
+  portionCalMedium Float
+  portionCalLarge  Float
+
+  mealFoods MealFood[]
+
+  @@index([category])
+  @@index([name])
+}
+
+model UserStats {
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  totalMealsLogged    Int      @default(0)
+  averageDailyCalories Float   @default(0)
+  favoriteFood        String?  @default("Not determined yet")
+  longestStreak       Int      @default(0)
+  currentStreak       Int      @default(0)
+  achievements        String[]
+  lastUpdated         DateTime @updatedAt
+}
+
+model WaterIntake {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime @db.Date
+  amount    Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+model SleepEntry {
+  id           String       @id @default(uuid())
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date         DateTime     @db.Date
+  hoursSlept   Float
+  sleepQuality SleepQuality
+  bedTime      String?
+  wakeTime     String?
+  notes        String?
+  createdAt    DateTime     @default(now())
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+model FoodPrediction {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topClassName    String
+  topConfidence   Float
+  allPredictions  Json
+  inferenceTimeMs Float
+  createdAt       DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model BMIHistory {
+  id     String   @id @default(uuid())
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date   DateTime @db.Date
+  weight Float
+  bmi    Float?
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}

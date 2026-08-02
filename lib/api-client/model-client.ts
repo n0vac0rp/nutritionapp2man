@@ -1,0 +1,73 @@
+export interface ModelPrediction {
+  class_name: string
+  confidence: number
+}
+
+export interface ModelPredictResponse {
+  predictions: ModelPrediction[]
+  top_prediction: ModelPrediction
+  inference_time_ms: number
+}
+
+export interface ModelHealthResponse {
+  status: string
+  model_loaded: boolean
+  model_name: string
+  classes: string[]
+  startup_timestamp: string
+}
+
+const MODEL_SERVICE_URL = process.env.MODEL_SERVICE_URL || "http://localhost:3002"
+const REQUEST_TIMEOUT_MS = 30000
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+
+  try {
+    const res = await fetch(`${MODEL_SERVICE_URL}${path}`, {
+      ...init,
+      signal: controller.signal,
+    })
+
+    if (!res.ok) {
+      const body = await res.text()
+      throw new ModelServiceError(res.status, body || res.statusText)
+    }
+
+    return (await res.json()) as T
+  } catch (err) {
+    if (err instanceof ModelServiceError) throw err
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw new ModelServiceError(504, "Model service request timed out")
+    }
+    throw new ModelServiceError(502, "Model service unavailable")
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
+export class ModelServiceError extends Error {
+  constructor(
+    public status: number,
+    message: string,
+    public code?: string,
+  ) {
+    super(message)
+    this.name = "ModelServiceError"
+  }
+}
+
+export async function getHealth(): Promise<ModelHealthResponse> {
+  return request<ModelHealthResponse>("/health")
+}
+
+export async function predict(file: File): Promise<ModelPredictResponse> {
+  const formData = new FormData()
+  formData.append("file", file)
+
+  return request<ModelPredictResponse>("/predict", {
+    method: "POST",
+    body: formData,
+  })
+}

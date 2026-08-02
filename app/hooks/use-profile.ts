@@ -1,64 +1,41 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "../contexts/auth-context"
-import { LocalDatabase, type UserProfile } from "@/lib/local-storage"
+import { api } from "@/lib/api-client"
+
+export interface UserProfile {
+  id: string; userId: string
+  culturalBackground: string[]; dietaryRestrictions: string[]
+  activityLevel: string; healthGoals: string[]; favoriteFoods: string[]
+  breakfastFoods: string[]; lunchFoods: string[]; dinnerFoods: string[]; snackFoods: string[]
+  notifications: boolean; dataSharing: boolean; units: string
+  breakfastReminderTime: string | null; lunchReminderTime: string | null; dinnerReminderTime: string | null
+  weeklyCalorieTarget: number | null; weeklyProteinTarget: number | null; weeklyExerciseDays: number | null
+  suggestedFoods: string[]; avoidFoods: string[]; mealPlanPreference: string | null; supplementSuggestions: string[]
+  updatedAt: string
+}
 
 export function useProfile() {
   const { user } = useAuth()
-  const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const queryClient = useQueryClient()
 
-  const fetchProfile = async () => {
-    if (!user) {
-      setProfile(null)
-      return
-    }
+  const { data: profile, isLoading, error } = useQuery({
+    queryKey: ["profile", user?.id],
+    queryFn: () => api.get<{ profile: UserProfile }>("/api/profile").then((r) => r.profile),
+    enabled: !!user,
+  })
 
-    setIsLoading(true)
-    setError(null)
-
+  const updateProfile = async (profileData: Record<string, unknown>) => {
+    if (!user) return { success: false, error: "No user logged in" }
     try {
-      const userProfile = LocalDatabase.getUserProfile(user.id)
-      setProfile(userProfile)
-    } catch (err) {
-      setError("Failed to fetch profile")
-      console.error("Error fetching profile:", err)
-    } finally {
-      setIsLoading(false)
+      await api.patch("/api/profile", profileData)
+      queryClient.invalidateQueries({ queryKey: ["profile", user.id] })
+      return { success: true }
+    } catch (err: any) {
+      return { success: false, error: err?.message || "Failed to update profile" }
     }
   }
 
-  const updateProfile = async (profileData: Omit<UserProfile, "userId" | "updatedAt">) => {
-    if (!user) {
-      return { success: false, error: "No user logged in" }
-    }
-
-    try {
-      const result = await LocalDatabase.updateUserProfile(user.id, profileData)
-
-      if (result.success && result.profile) {
-        setProfile(result.profile)
-        return { success: true, profile: result.profile }
-      } else {
-        return { success: false, error: result.error || "Failed to update profile" }
-      }
-    } catch (err) {
-      console.error("Error updating profile:", err)
-      return { success: false, error: "An unexpected error occurred" }
-    }
-  }
-
-  useEffect(() => {
-    fetchProfile()
-  }, [user])
-
-  return {
-    profile,
-    isLoading,
-    error,
-    updateProfile,
-    refetch: fetchProfile,
-  }
+  return { profile: profile ?? null, isLoading, error: error ? String(error) : null, updateProfile, refetch: () => queryClient.invalidateQueries({ queryKey: ["profile", user?.id] }) }
 }

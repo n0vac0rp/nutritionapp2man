@@ -1,0 +1,8 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+torchvision
+fastapi==0.115.*
+uvicorn[standard]==0.32.*
+Pillow==11.*
+python-multipart==0.0.*
+pydantic-settings==2.*

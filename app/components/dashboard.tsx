@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "../contexts/auth-context"
 import { useMeals } from "../hooks/use-meals"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -24,8 +24,9 @@ import {
   SheetIcon as SleepIcon,
   Dumbbell,
   Droplets,
+  Hand,
 } from "lucide-react"
-import { calculateBMI, getDailyCalorieRecommendation } from "../utils/calculations"
+import { calculateBMI, getDailyCalorieRecommendation, calculatePortionWeight } from "../utils/calculations"
 import MealLogger from "./meal-logger"
 import BMICalculator from "./bmi-calculator"
 import NutritionSummary from "./nutrition-summary"
@@ -36,7 +37,7 @@ import AdminDashboard from "./admin-dashboard"
 import SleepTracker from "./sleep-tracker"
 import PhysicalActivities from "./physical-activities"
 import WaterTracker from "./water-tracker"
-import { LocalDatabase } from "@/lib/local-storage"
+import { api } from "@/lib/api-client"
 
 export default function Dashboard() {
   const { user, logout } = useAuth()
@@ -46,23 +47,27 @@ export default function Dashboard() {
   const today = new Date().toISOString().split("T")[0]
   const { meals: todaysMeals, deleteMeal, isLoading: mealsLoading, refetch } = useMeals(today)
 
+  const loadWaterIntake = useCallback(async () => {
+    if (!user) return
+    try {
+      const data = await api.get<{ intake: { amount: number } | null }>("/api/water/today")
+      setWaterIntake(data.intake?.amount || 0)
+    } catch {}
+  }, [user])
+
   useEffect(() => {
     if (activeTab === "overview") {
       refetch()
       loadWaterIntake()
     }
-  }, [activeTab, refetch])
-
-  const loadWaterIntake = () => {
-    if (user) {
-      const waterData = LocalDatabase.getWaterIntake(user.id, today)
-      setWaterIntake(waterData?.amount || 0)
-    }
-  }
+  }, [activeTab, refetch, loadWaterIntake])
 
   if (!user) return null
 
   const bmiResult = calculateBMI(user.weight, user.height)
+  const portionWeight = user.fistCircumference
+    ? calculatePortionWeight(bmiResult.bmi, user.fistCircumference, user.height, user.age)
+    : null
   const dailyCalories = getDailyCalorieRecommendation(user.age, user.gender, user.weight, user.height)
 
   const totalCaloriesToday = todaysMeals?.reduce((sum, meal) => sum + (meal.totalNutrition?.calories || 0), 0) || 0
@@ -104,7 +109,7 @@ export default function Dashboard() {
                 <Avatar className="h-5 w-5 xs:h-6 xs:w-6">
                   <AvatarImage src="/placeholder.svg?height=24&width=24" />
                   <AvatarFallback className="bg-green-600 text-white text-xs">
-                    {user.fullName
+                    {(user.fullName || "")
                       .split(" ")
                       .map((n) => n[0])
                       .join("")
@@ -212,7 +217,7 @@ export default function Dashboard() {
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm xs:text-base flex items-center gap-1 xs:gap-2">
                     <Target className="h-3 w-3 xs:h-4 xs:w-4 text-green-600" />
-                    Today's Calories
+                    Today&apos;s Calories
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -305,11 +310,33 @@ export default function Dashboard() {
                   </div>
                 </CardContent>
               </Card>
+
+              {portionWeight !== null && (
+                <Card className="border-green-200 dark:border-green-800">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm xs:text-base flex items-center gap-1 xs:gap-2">
+                      <Hand className="h-3 w-3 xs:h-4 xs:w-4 text-green-600" />
+                      Portion Weight
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-1 xs:space-y-2">
+                      <div className="text-lg xs:text-xl font-bold text-green-700 dark:text-green-300">
+                        {portionWeight}g
+                      </div>
+                      <div className="text-xs text-muted-foreground">Clenched fist portion</div>
+                      <div className="text-xs text-muted-foreground">
+                        Fist: {user.fistCircumference}cm
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm xs:text-base">Today's Meals</CardTitle>
+                <CardTitle className="text-sm xs:text-base">Today&apos;s Meals</CardTitle>
                 <CardDescription className="text-xs">Your food intake for today</CardDescription>
               </CardHeader>
               <CardContent>
@@ -359,16 +386,16 @@ export default function Dashboard() {
                             {meal.foods.map((food) => food.name).join(", ")}
                           </div>
                           {meal.notes && (
-                            <div className="text-xs text-muted-foreground italic mt-1">"{meal.notes}"</div>
+                            <div className="text-xs text-muted-foreground italic mt-1">&ldquo;{meal.notes}&rdquo;</div>
                           )}
                         </div>
                         <div className="flex items-center justify-between xs:justify-end gap-2">
                           <div className="text-right">
                             <div className="font-bold text-xs xs:text-sm">
-                              {meal.totalNutrition.calories.toFixed(0)} cal
+                              {(meal.totalNutrition?.calories ?? 0).toFixed(0)} cal
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              {meal.totalNutrition.protein.toFixed(1)}g protein
+                              {(meal.totalNutrition?.protein ?? 0).toFixed(1)}g protein
                             </div>
                           </div>
                           <Button
@@ -390,7 +417,7 @@ export default function Dashboard() {
             <Card className="bg-card border-border">
               <CardHeader>
                 <CardTitle className="text-sm xs:text-base">Quick Health Tips</CardTitle>
-                <CardDescription className="text-xs">Based on your BMI and today's intake</CardDescription>
+                <CardDescription className="text-xs">Based on your BMI and today&apos;s intake</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 xs:space-y-3">

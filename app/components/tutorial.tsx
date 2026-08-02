@@ -53,7 +53,7 @@ const tutorialSteps = [
       <div className="space-y-8">
         <div className="text-center">
           <p className="text-lg text-muted-foreground leading-relaxed">
-            Use the "Log Meal" button to record your breakfast, lunch, dinner, and snacks. Our comprehensive database
+            Use the &ldquo;Log Meal&rdquo; button to record your breakfast, lunch, dinner, and snacks. Our comprehensive database
             includes your favorite Nigerian dishes:
           </p>
         </div>
@@ -198,7 +198,7 @@ const tutorialSteps = [
         <div className="text-center">
           <div className="text-6xl mb-4">🏆</div>
           <p className="text-lg text-muted-foreground leading-relaxed">
-            Congratulations! You're ready to start your personalized nutrition journey with GluGuide. Here's your
+            Congratulations! You&apos;re ready to start your personalized nutrition journey with GluGuide. Here&apos;s your
             roadmap to success:
           </p>
         </div>

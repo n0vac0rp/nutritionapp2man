@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "../contexts/auth-context"
 import { useMeals } from "../hooks/use-meals"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -42,13 +42,7 @@ export default function NutritionSummary() {
     }
   }, [user])
 
-  useEffect(() => {
-    if (meals.length > 0) {
-      processNutritionData()
-    }
-  }, [meals, selectedPeriod])
-
-  const processNutritionData = () => {
+  const processNutritionData = useCallback(() => {
     const days = Number.parseInt(selectedPeriod)
     const data: DayNutrition[] = []
 
@@ -61,13 +55,13 @@ export default function NutritionSummary() {
 
       const dayTotals = dayMeals.reduce(
         (totals, meal) => ({
-          calories: totals.calories + meal.totalNutrition.calories,
-          protein: totals.protein + meal.totalNutrition.protein,
-          carbs: totals.carbs + meal.totalNutrition.carbs,
-          fats: totals.fats + meal.totalNutrition.fats,
-          fiber: totals.fiber + meal.totalNutrition.fiber,
-          iron: totals.iron + meal.totalNutrition.iron,
-          vitaminA: totals.vitaminA + meal.totalNutrition.vitaminA,
+          calories: totals.calories + (meal.totalNutrition?.calories ?? 0),
+          protein: totals.protein + (meal.totalNutrition?.protein ?? 0),
+          carbs: totals.carbs + (meal.totalNutrition?.carbs ?? 0),
+          fats: totals.fats + (meal.totalNutrition?.fats ?? 0),
+          fiber: totals.fiber + (meal.totalNutrition?.fiber ?? 0),
+          iron: totals.iron + (meal.totalNutrition?.iron ?? 0),
+          vitaminA: totals.vitaminA + (meal.totalNutrition?.vitaminA ?? 0),
         }),
         { calories: 0, protein: 0, carbs: 0, fats: 0, fiber: 0, iron: 0, vitaminA: 0 },
       )
@@ -86,7 +80,13 @@ export default function NutritionSummary() {
     }
 
     setNutritionData(data.reverse()) // Show oldest to newest
-  }
+  }, [meals, selectedPeriod])
+
+  useEffect(() => {
+    if (meals.length > 0) {
+      processNutritionData()
+    }
+  }, [meals, selectedPeriod, processNutritionData])
 
   const averages =
     nutritionData.length > 0

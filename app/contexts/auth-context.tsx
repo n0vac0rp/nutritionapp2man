@@ -1,13 +1,36 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useState, useEffect } from "react"
-import { LocalDatabase, type User } from "@/lib/local-storage"
+import { createContext, useContext, useState, useEffect, useCallback } from "react"
+import { api, setToken, getToken, ApiError } from "@/lib/api-client"
+
+export interface User {
+  id: string
+  email: string
+  fullName: string
+  age: number
+  gender: "male" | "female" | "other"
+  height: number
+  weight: number
+  waistCircumference?: number | null
+  hipCircumference?: number | null
+  fistCircumference?: number | null
+  location?: string | null
+  occupation?: string | null
+  healthConditions?: string[]
+  fitnessGoals?: string[]
+  role: "user" | "admin"
+  tutorialCompleted?: boolean
+  appRated?: boolean
+  createdAt: string
+  updatedAt: string
+  lastLoginAt: string
+}
 
 interface AuthContextType {
   user: User | null
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
-  signup: (userData: {
+  signup: (data: {
     fullName: string
     email: string
     password: string
@@ -15,8 +38,9 @@ interface AuthContextType {
     gender: "male" | "female" | "other"
     height: number
     weight: number
-    waistCircumference?: number // Added optional waist circumference to signup interface
-    hipCircumference?: number // Added optional hip circumference to signup interface
+    waistCircumference?: number
+    hipCircumference?: number
+    fistCircumference: number
   }) => Promise<{ success: boolean; error?: string }>
   logout: () => Promise<void>
   updateProfile: (updates: Partial<User>) => Promise<{ success: boolean; error?: string }>
@@ -37,130 +61,75 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [showTutorial, setShowTutorial] = useState(false)
   const [showRatingDialog, setShowRatingDialog] = useState(false)
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      // Initialize database with demo users on client side
-      LocalDatabase.initialize()
-      checkAuth()
-    } else {
+  const checkAuth = useCallback(async () => {
+    const t = getToken()
+    if (!t) {
+      setIsLoading(false)
+      return
+    }
+    try {
+      const u = await api.get<User>("/api/auth/me")
+      setUser(u)
+      if (!u.tutorialCompleted) setShowTutorial(true)
+    } catch {
+      setToken(null)
+      setUser(null)
+    } finally {
       setIsLoading(false)
     }
   }, [])
 
-  const checkAuth = async () => {
-    try {
-      if (typeof window === "undefined") {
-        setIsLoading(false)
-        return
-      }
-
-      const currentUser = LocalDatabase.getCurrentUser()
-      setUser(currentUser)
-      if (currentUser) {
-        const tutorialCompleted = localStorage.getItem(`tutorial_completed_${currentUser.id}`) === "true"
-
-        if (!tutorialCompleted) {
-          setShowTutorial(true)
-        }
-      }
-    } catch (error) {
-      console.error("Auth check failed:", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  useEffect(() => {
+    checkAuth()
+  }, [checkAuth])
 
   const login = async (email: string, password: string) => {
     try {
-      if (typeof window !== "undefined") {
-        LocalDatabase.initialize()
-      }
-
-      console.log("[v0] Starting login process for:", email)
-      const result = await LocalDatabase.loginUser(email, password)
-      console.log("[v0] Login result:", result)
-
-      if (result.success && result.user) {
-        console.log("[v0] Setting user in auth context:", result.user.email)
-        setUser(result.user)
-        if (typeof window !== "undefined") {
-          const tutorialCompleted = localStorage.getItem(`tutorial_completed_${result.user.id}`) === "true"
-          if (!tutorialCompleted) {
-            setShowTutorial(true)
-          }
-
-          const hasRated = localStorage.getItem(`app_rated_${result.user.id}`) === "true"
-          if (!hasRated) {
-            setTimeout(() => {
-              setShowRatingDialog(true)
-            }, 1500)
-          }
-        }
-        console.log("[v0] Login process completed successfully")
-        return { success: true }
-      } else {
-        console.log("[v0] Login failed with error:", result.error)
-        return { success: false, error: result.error || "Login failed" }
-      }
-    } catch (error) {
-      console.error("[v0] Login error:", error)
-      return { success: false, error: "An unexpected error occurred" }
+      const data = await api.post<{ user: User; token: string }>("/api/auth/login", { email, password })
+      setToken(data.token)
+      setUser(data.user)
+      if (!data.user.tutorialCompleted) setShowTutorial(true)
+      setTimeout(() => {
+        if (!data.user.appRated) setShowRatingDialog(true)
+      }, 1500)
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: err instanceof ApiError ? err.message : "Login failed" }
     }
   }
 
   const signup = async (userData: {
-    fullName: string
-    email: string
-    password: string
-    age: number
-    gender: "male" | "female" | "other"
-    height: number
-    weight: number
-    waistCircumference?: number // Added waist circumference parameter
-    hipCircumference?: number // Added hip circumference parameter
+    fullName: string; email: string; password: string; age: number
+    gender: "male" | "female" | "other"; height: number; weight: number
+    waistCircumference?: number; hipCircumference?: number; fistCircumference: number
   }) => {
     try {
-      const result = await LocalDatabase.createUser(userData)
-
-      if (result.success && result.user) {
-        setUser(result.user)
-        setShowTutorial(true)
-        return { success: true }
-      } else {
-        return { success: false, error: result.error || "Signup failed" }
-      }
-    } catch (error) {
-      return { success: false, error: "An unexpected error occurred" }
+      const data = await api.post<{ user: User; token: string }>("/api/auth/signup", userData)
+      setToken(data.token)
+      setUser(data.user)
+      setShowTutorial(true)
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: err instanceof ApiError ? err.message : "Signup failed" }
     }
   }
 
   const logout = async () => {
-    try {
-      LocalDatabase.logoutUser()
-      setUser(null)
-      setShowTutorial(false)
-      setShowRatingDialog(false)
-    } catch (error) {
-      console.error("Logout error:", error)
-    }
+    try { await api.post("/api/auth/logout") } catch {}
+    setToken(null)
+    setUser(null)
+    setShowTutorial(false)
+    setShowRatingDialog(false)
   }
 
   const updateProfile = async (updates: Partial<User>) => {
-    if (!user) {
-      return { success: false, error: "No user logged in" }
-    }
-
+    if (!user) return { success: false, error: "No user logged in" }
     try {
-      const result = await LocalDatabase.updateUser(user.id, updates)
-
-      if (result.success && result.user) {
-        setUser(result.user)
-        return { success: true }
-      } else {
-        return { success: false, error: result.error || "Update failed" }
-      }
-    } catch (error) {
-      return { success: false, error: "An unexpected error occurred" }
+      const updated = await api.patch<User>("/api/users/me", updates)
+      setUser(updated)
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: err instanceof ApiError ? err.message : "Update failed" }
     }
   }
 
@@ -170,16 +139,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const completeTutorial = () => {
     setShowTutorial(false)
-    if (typeof window !== "undefined") {
-      localStorage.setItem(`tutorial_completed_${user?.id}`, "true")
-    }
   }
 
   const skipTutorial = () => {
     setShowTutorial(false)
-    if (typeof window !== "undefined") {
-      localStorage.setItem(`tutorial_completed_${user?.id}`, "true")
-    }
   }
 
   const closeRatingDialog = () => {
@@ -189,18 +152,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <AuthContext.Provider
       value={{
-        user,
-        login,
-        signup,
-        logout,
-        updateProfile,
-        isLoading,
-        refreshUser,
-        showTutorial,
-        completeTutorial,
-        skipTutorial,
-        showRatingDialog,
-        closeRatingDialog,
+        user, login, signup, logout, updateProfile,
+        isLoading, refreshUser,
+        showTutorial, completeTutorial, skipTutorial,
+        showRatingDialog, closeRatingDialog,
       }}
     >
       {children}
@@ -210,8 +165,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
-  }
+  if (!context) throw new Error("useAuth must be used within AuthProvider")
   return context
 }

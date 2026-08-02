@@ -1437,6 +1437,36 @@ export function calculatePortionNutrition(food: NigerianFood, servings: number) 
   }
 }
 
+export interface FistNutritionResult {
+  grams: number
+  calories: number
+  protein: number
+  carbs: number
+  fats: number
+  fiber: number
+  iron: number
+  vitaminA: number
+}
+
+export function calculateFistNutrition(
+  food: NigerianFood,
+  fists: number,
+  portionWeightPerFist: number,
+): FistNutritionResult {
+  const totalGrams = portionWeightPerFist * fists
+  const multiplier = totalGrams / food.servingWeight
+  return {
+    grams: Number(totalGrams.toFixed(1)),
+    calories: Number((food.calories * multiplier).toFixed(1)),
+    protein: Number((food.protein * multiplier).toFixed(1)),
+    carbs: Number((food.carbs * multiplier).toFixed(1)),
+    fats: Number((food.fats * multiplier).toFixed(1)),
+    fiber: Number((food.fiber * multiplier).toFixed(1)),
+    iron: Number((food.iron * multiplier).toFixed(2)),
+    vitaminA: Number((food.vitaminA * multiplier).toFixed(1)),
+  }
+}
+
 export function getFoodById(id: string): NigerianFood | undefined {
   return nigerianFoods.find((food) => food.id === id)
 }

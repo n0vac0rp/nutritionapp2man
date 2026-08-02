@@ -34,6 +34,7 @@ export default function AuthPage() {
     height: "",
     weight: "",
     waistCircumference: "",
+    fistCircumference: "",
   })
 
   const [showPassword, setShowPassword] = useState(false)
@@ -77,7 +78,8 @@ export default function AuthPage() {
       !signupData.age ||
       !signupData.gender ||
       !signupData.height ||
-      !signupData.weight
+      !signupData.weight ||
+      !signupData.fistCircumference
     ) {
       setMessage({ type: "error", text: "Please fill in all required fields" })
       setIsLoading(false)
@@ -93,6 +95,7 @@ export default function AuthPage() {
       height: Number.parseFloat(signupData.height),
       weight: Number.parseFloat(signupData.weight),
       waistCircumference: signupData.waistCircumference ? Number.parseFloat(signupData.waistCircumference) : undefined,
+      fistCircumference: Number.parseFloat(signupData.fistCircumference),
     }
 
     const result = await signup(userData)
@@ -340,6 +343,27 @@ export default function AuthPage() {
                     />
                     <p className="text-xs text-gray-500">
                       Optional: Measure around your waist at the narrowest point for better health insights
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-fist" className="text-sm font-medium text-gray-700">
+                      Fist Circumference (cm) *
+                    </Label>
+                    <Input
+                      id="signup-fist"
+                      type="number"
+                      placeholder="25"
+                      min="5"
+                      max="50"
+                      step="0.1"
+                      value={signupData.fistCircumference}
+                      onChange={(e) => setSignupData({ ...signupData, fistCircumference: e.target.value })}
+                      required
+                      className="h-12 text-base text-gray-900 border-gray-300 focus:border-green-500 focus:ring-green-500"
+                    />
+                    <p className="text-xs text-gray-500">
+                      Measure around your closed fist for personalized portion size calculation
                     </p>
                   </div>
 
