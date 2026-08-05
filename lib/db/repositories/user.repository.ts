@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db/prisma"
-import type { Prisma } from "@prisma/client"
+import type { Prisma } from "@/generated/prisma/client"
 
 export async function findById(id: string) {
   return prisma.user.findUnique({ where: { id } })

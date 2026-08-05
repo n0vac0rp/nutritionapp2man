@@ -7,12 +7,10 @@
     "dev": "next dev",
     "lint": "next lint",
     "start": "next start",
-    "db:seed": "npx tsx prisma/seed.ts"
-  },
-  "prisma": {
-    "seed": "npx tsx prisma/seed.ts"
+    "db:seed": "npx prisma db seed"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "latest",
     "@radix-ui/react-alert-dialog": "latest",
@@ -49,6 +47,7 @@
     "clsx": "^2.1.1",
     "cmdk": "latest",
     "date-fns": "4.1.0",
+    "dotenv": "^16",
     "embla-carousel-react": "latest",
     "geist": "^1.3.1",
     "input-otp": "latest",
@@ -56,6 +55,7 @@
     "lucide-react": "^0.454.0",
     "next": "^15.5.22",
     "next-themes": "latest",
+    "pg": "^8",
     "react": "^19",
     "react-day-picker": "^9.14.0",
     "react-dom": "^19",
@@ -66,20 +66,21 @@
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "uuid": "latest",
+    "@prisma/client": "^7.9.1",
     "vaul": "latest",
     "zod": "3.25.76"
   },
   "devDependencies": {
-    "@prisma/client": "^6.19.3",
     "@tailwindcss/postcss": "^4.1.9",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22",
+    "@types/pg": "^8",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "9.39.5",
     "eslint-config-next": "^15.5.22",
     "postcss": "^8.5",
-    "prisma": "^6.19.3",
+    "prisma": "^7.9.1",
     "tailwindcss": "^4.1.9",
     "tsx": "^4.23.1",
     "tw-animate-css": "1.3.3",

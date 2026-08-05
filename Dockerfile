@@ -6,7 +6,6 @@ RUN if [ -f package-lock.json ]; then npm ci --legacy-peer-deps; else npm instal
 FROM deps AS builder
 COPY . .
 RUN npx prisma generate
-RUN npx esbuild prisma/seed.ts --bundle --platform=node --target=node22 --outfile=prisma/seed.mjs --format=esm --external:@prisma/client
 RUN npm run build
 
 FROM node:22-slim AS runner
@@ -17,10 +16,12 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/generated ./generated
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/package.json ./
-RUN npm install --no-save --legacy-peer-deps prisma
+RUN npm install --no-save --legacy-peer-deps prisma tsx @prisma/adapter-pg pg dotenv
 COPY scripts/entrypoint.sh ./entrypoint.sh
+COPY scripts/check-seeded.ts ./scripts/check-seeded.ts
 RUN chmod +x entrypoint.sh && chown -R nextjs:nodejs /app
 USER nextjs
 EXPOSE 3000

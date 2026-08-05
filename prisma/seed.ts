@@ -1,6 +1,9 @@
-import { PrismaClient } from "@prisma/client"
+import "dotenv/config"
+import { PrismaClient } from "../generated/prisma/client"
+import { PrismaPg } from "@prisma/adapter-pg"
 
-const prisma = new PrismaClient()
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! })
+const prisma = new PrismaClient({ adapter })
 
 const foods = [
   { id: "amala-yam-flour", name: "Amala (Yam flour)", category: "Whole Grains and Tubers", calories: 110, protein: 2.5, carbs: 25.0, fats: 0.5, fiber: 2.0, iron: 0.6, vitaminA: 100, description: "Cooked yam flour swallow", servingSize: "1 ladle (100g cooked)", servingWeight: 100, portionCalories: { small: 110, medium: 260, large: 390 } },
