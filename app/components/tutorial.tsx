@@ -30,7 +30,7 @@ const tutorialSteps = [
             recommendations tailored to your health goals.
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div className="p-6 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 border border-emerald-200 dark:border-emerald-700 rounded-xl text-center">
             <div className="text-4xl font-bold text-emerald-600 mb-2">500+</div>
             <div className="text-base text-emerald-700 dark:text-emerald-300 font-medium">Nigerian Foods</div>
@@ -203,7 +203,7 @@ const tutorialSteps = [
           </p>
         </div>
         <div className="space-y-4">
-          <div className="flex items-center gap-4 p-6 bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 border border-emerald-200 dark:border-emerald-700 rounded-xl">
+          <div className="flex flex-col gap-4 p-6 bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 border border-emerald-200 dark:border-emerald-700 rounded-xl sm:flex-row sm:items-center">
             <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-full flex items-center justify-center text-xl font-bold shadow-lg">
               1
             </div>
@@ -214,7 +214,7 @@ const tutorialSteps = [
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-4 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-700 rounded-xl">
+          <div className="flex flex-col gap-4 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-700 rounded-xl sm:flex-row sm:items-center">
             <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-full flex items-center justify-center text-xl font-bold shadow-lg">
               2
             </div>
@@ -225,7 +225,7 @@ const tutorialSteps = [
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-4 p-6 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-700 rounded-xl">
+          <div className="flex flex-col gap-4 p-6 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-700 rounded-xl sm:flex-row sm:items-center">
             <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full flex items-center justify-center text-xl font-bold shadow-lg">
               3
             </div>
@@ -263,7 +263,7 @@ export default function Tutorial({ onComplete, onSkip }: TutorialProps) {
 
   return (
     <div className="fixed inset-0 bg-black flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-5xl max-h-[90vh] overflow-y-auto shadow-2xl border-0 bg-background">
+      <Card className="w-full max-w-3xl sm:max-w-5xl max-h-[90vh] overflow-y-auto shadow-2xl border-0 bg-background">
         <CardHeader className="relative bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-500 text-white p-8">
           <Button
             variant="ghost"
@@ -274,7 +274,7 @@ export default function Tutorial({ onComplete, onSkip }: TutorialProps) {
             <X className="h-5 w-5" />
           </Button>
 
-          <div className="flex items-center gap-6">
+          <div className="flex flex-col items-center gap-6 text-center sm:flex-row sm:items-center sm:text-left">
             <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm">{step.icon}</div>
             <div>
               <CardTitle className="text-3xl font-bold mb-2">{step.title}</CardTitle>
@@ -297,24 +297,24 @@ export default function Tutorial({ onComplete, onSkip }: TutorialProps) {
         <CardContent className="p-8 min-h-[400px] bg-background">
           {step.content}
 
-          <div className="flex justify-between items-center pt-8 mt-8 border-t">
+          <div className="flex flex-col gap-3 justify-between items-stretch pt-8 mt-8 border-t sm:flex-row sm:items-center">
             <Button
               variant="outline"
               onClick={prevStep}
               disabled={currentStep === 0}
-              className="flex items-center gap-2 px-6 py-3 text-base h-12 bg-transparent"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 text-base h-12 bg-transparent"
             >
               <ChevronLeft className="h-5 w-5" />
               Previous
             </Button>
 
-            <div className="text-lg text-muted-foreground font-medium">
+            <div className="text-lg text-muted-foreground font-medium text-center">
               {currentStep + 1} of {tutorialSteps.length}
             </div>
 
             <Button
               onClick={nextStep}
-              className="flex items-center gap-2 px-8 py-3 text-base h-12 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-lg"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3 text-base h-12 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-lg"
             >
               {currentStep === tutorialSteps.length - 1 ? "Done" : "Next"}
               <ChevronRight className="h-5 w-5" />
