@@ -1,13 +1,12 @@
 import { NextRequest } from "next/server"
-import { getUserFromRequest } from "@/lib/auth/get-user"
+import { requireUser } from "@/lib/auth/get-user"
 import { createMealSchema, mealsQuerySchema } from "@/lib/validators/meals.validator"
-import { parseBody, parseQuery, handleApiError, successResponse, errorResponse } from "@/lib/api-helpers"
+import { parseBody, parseQuery, handleApiError, successResponse } from "@/lib/api-helpers"
 import * as mealsService from "@/lib/services/meals.service"
 
 export async function GET(req: NextRequest) {
   try {
-    const user = await getUserFromRequest(req)
-    if (!user) return errorResponse("Authentication required", 401, "UNAUTHORIZED")
+    const user = await requireUser(req)
 
     const query = parseQuery(req, mealsQuerySchema)
     const meals = await mealsService.getMeals(user.id, {
@@ -22,8 +21,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const user = await getUserFromRequest(req)
-    if (!user) return errorResponse("Authentication required", 401, "UNAUTHORIZED")
+    const user = await requireUser(req)
 
     const body = await parseBody(req, createMealSchema)
     const meal = await mealsService.createMeal({

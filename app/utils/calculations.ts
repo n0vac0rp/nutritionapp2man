@@ -279,39 +279,6 @@ export function calculateEnhancedHealthMetrics(
   }
 }
 
-export interface NutritionCalculation {
-  calories: number
-  protein: number
-  carbs: number
-  fats: number
-  fiber: number
-  iron: number
-  vitaminA: number
-}
-
-export function calculateNutrition(
-  caloriesPer100g: number,
-  proteinPer100g: number,
-  carbsPer100g: number,
-  fatsPer100g: number,
-  fiberPer100g: number,
-  ironPer100g: number,
-  vitaminAPer100g: number,
-  grams: number,
-): NutritionCalculation {
-  const multiplier = grams / 100
-
-  return {
-    calories: Number((caloriesPer100g * multiplier).toFixed(1)),
-    protein: Number((proteinPer100g * multiplier).toFixed(1)),
-    carbs: Number((carbsPer100g * multiplier).toFixed(1)),
-    fats: Number((fatsPer100g * multiplier).toFixed(1)),
-    fiber: Number((fiberPer100g * multiplier).toFixed(1)),
-    iron: Number((ironPer100g * multiplier).toFixed(2)),
-    vitaminA: Number((vitaminAPer100g * multiplier).toFixed(1)),
-  }
-}
-
 export function calculatePortionWeight(
   bmi: number,
   fistCircumference: number,

@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/db/prisma"
 
-export async function findByUserIdAndDate(userId: string, date: string) {
+export async function findTodayByUserId(userId: string) {
+  const today = new Date().toISOString().split("T")[0]
   return prisma.waterIntake.findUnique({
-    where: { userId_date: { userId, date: new Date(date) } },
+    where: { userId_date: { userId, date: new Date(today) } },
   })
 }
 

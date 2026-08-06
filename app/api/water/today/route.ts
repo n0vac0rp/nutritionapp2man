@@ -1,14 +1,13 @@
 import { NextRequest } from "next/server"
-import { getUserFromRequest } from "@/lib/auth/get-user"
-import { handleApiError, successResponse, errorResponse } from "@/lib/api-helpers"
-import * as waterService from "@/lib/services/water.service"
+import { requireUser } from "@/lib/auth/get-user"
+import { handleApiError, successResponse } from "@/lib/api-helpers"
+import * as waterRepo from "@/lib/db/repositories/water.repository"
 
 export async function GET(req: NextRequest) {
   try {
-    const user = await getUserFromRequest(req)
-    if (!user) return errorResponse("Authentication required", 401, "UNAUTHORIZED")
+    const user = await requireUser(req)
 
-    const intake = await waterService.getTodayIntake(user.id)
+    const intake = await waterRepo.findTodayByUserId(user.id)
     return successResponse({ intake })
   } catch (err) {
     return handleApiError(err)

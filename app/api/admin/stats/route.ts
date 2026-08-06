@@ -1,20 +1,19 @@
 import { NextRequest } from "next/server"
-import { getUserFromRequest } from "@/lib/auth/get-user"
-import { handleApiError, successResponse, errorResponse } from "@/lib/api-helpers"
-import { prisma } from "@/lib/db/prisma"
+import { requireUser } from "@/lib/auth/get-user"
+import { ForbiddenError } from "@/lib/errors"
+import { handleApiError, successResponse } from "@/lib/api-helpers"
+import * as userRepo from "@/lib/db/repositories/user.repository"
+import * as mealRepo from "@/lib/db/repositories/meal.repository"
 
 export async function GET(req: NextRequest) {
   try {
-    const user = await getUserFromRequest(req)
-    if (!user) return errorResponse("Authentication required", 401, "UNAUTHORIZED")
-    if (user.role !== "ADMIN") return errorResponse("Insufficient permissions", 403, "FORBIDDEN")
+    const user = await requireUser(req)
+    if (user.role !== "ADMIN") throw new ForbiddenError()
 
     const [totalUsers, totalMeals, activeUsers] = await Promise.all([
-      prisma.user.count(),
-      prisma.meal.count(),
-      prisma.user.count({
-        where: { lastLoginAt: { gte: new Date(Date.now() - 7 * 86400000) } },
-      }),
+      userRepo.count(),
+      mealRepo.count(),
+      userRepo.countActiveSince(new Date(Date.now() - 7 * 86400000)),
     ])
 
     return successResponse({ totalUsers, totalMeals, activeUsers })

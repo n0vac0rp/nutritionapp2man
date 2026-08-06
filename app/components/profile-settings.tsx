@@ -190,23 +190,28 @@ function ProfileSettingsForm() {
     }
   }
 
-  const importData = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
+  /*
+   * Import feature disabled: no /api/import route exists yet (would 404).
+   * Restore by uncommenting this handler and the Import Data input below,
+   * then implement POST /api/import.
+   */
+  // const importData = (event: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = event.target.files?.[0]
+  //   if (!file) return
 
-    const reader = new FileReader()
-    reader.onload = async (e) => {
-      try {
-        const jsonData = e.target?.result as string
-        await api.post("/api/import", { jsonData })
-        setMessage({ type: "success", text: "Data imported successfully! Please refresh the page." })
-        setTimeout(() => window.location.reload(), 2000)
-      } catch (error) {
-        setMessage({ type: "error", text: "Invalid file format" })
-      }
-    }
-    reader.readAsText(file)
-  }
+  //   const reader = new FileReader()
+  //   reader.onload = async (e) => {
+  //     try {
+  //       const jsonData = e.target?.result as string
+  //       await api.post("/api/import", { jsonData })
+  //       setMessage({ type: "success", text: "Data imported successfully! Please refresh the page." })
+  //       setTimeout(() => window.location.reload(), 2000)
+  //     } catch (error) {
+  //       setMessage({ type: "error", text: "Invalid file format" })
+  //     }
+  //   }
+  //   reader.readAsText(file)
+  // }
 
   const hasChanges =
     formData.fullName !== user.fullName ||
@@ -293,7 +298,8 @@ function ProfileSettingsForm() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1">
+            {/* Import Data input disabled: /api/import is not implemented yet. */}
+            {/* <div className="flex-1">
               <Label htmlFor="import-data" className="text-sm">
                 Import Data
               </Label>
@@ -304,7 +310,7 @@ function ProfileSettingsForm() {
                 onChange={importData}
                 className="bg-background text-sm"
               />
-            </div>
+            </div> */}
             <div className="flex items-end">
               <Button
                 onClick={async () => {

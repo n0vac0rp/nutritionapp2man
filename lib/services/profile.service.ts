@@ -1,31 +1,25 @@
-import * as profileRepo from "@/lib/db/repositories/profile.repository"
 import * as userRepo from "@/lib/db/repositories/user.repository"
-import { verifyPassword, hashPassword } from "@/lib/auth/password"
-import { UnauthorizedError } from "@/lib/errors"
+import * as bmiRepo from "@/lib/db/repositories/bmi-history.repository"
+import type { Prisma } from "@/generated/prisma/client"
 
-export async function getProfile(userId: string) {
-  return profileRepo.findByUserId(userId)
-}
-
-export async function updateProfile(userId: string, data: Record<string, unknown>) {
-  return profileRepo.upsertByUserId(userId, data as Parameters<typeof profileRepo.upsertByUserId>[1])
-}
-
-export async function updateUser(userId: string, data: Record<string, unknown>) {
-  return userRepo.update(userId, data as Parameters<typeof userRepo.update>[1])
-}
-
-export async function changePassword(
+export async function updateUser(
   userId: string,
-  currentPassword: string,
-  newPassword: string,
+  currentWeight: number | null,
+  data: Prisma.UserUpdateInput,
 ) {
-  const user = await userRepo.findById(userId)
-  if (!user) throw new UnauthorizedError("User not found")
+  const updated = await userRepo.update(userId, data)
 
-  const valid = await verifyPassword(currentPassword, user.passwordHash)
-  if (!valid) throw new UnauthorizedError("Current password is incorrect")
+  const weight = data.weight as number | undefined
+  if (weight !== undefined && Math.abs(weight - (currentWeight ?? 0)) > 0.01) {
+    const height = data.height as number | undefined
+    const bmi = height ? Math.round((weight / Math.pow(height / 100, 2)) * 10) / 10 : undefined
+    await bmiRepo.create({
+      userId,
+      date: new Date().toISOString().split("T")[0],
+      weight,
+      bmi,
+    })
+  }
 
-  const newHash = await hashPassword(newPassword)
-  await userRepo.updatePassword(userId, newHash)
+  return updated
 }

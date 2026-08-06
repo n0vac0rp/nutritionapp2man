@@ -1,4 +1,4 @@
-import { successResponse } from "@/lib/types/api-response"
+import { successResponse } from "@/lib/api-helpers"
 
 export async function POST() {
   return successResponse(null)

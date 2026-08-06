@@ -9,14 +9,6 @@ export interface ModelPredictResponse {
   inference_time_ms: number
 }
 
-export interface ModelHealthResponse {
-  status: string
-  model_loaded: boolean
-  model_name: string
-  classes: string[]
-  startup_timestamp: string
-}
-
 const MODEL_SERVICE_URL = process.env.MODEL_SERVICE_URL || "http://localhost:3002"
 const REQUEST_TIMEOUT_MS = 30000
 
@@ -63,10 +55,6 @@ export class ModelServiceError extends Error {
     super(message)
     this.name = "ModelServiceError"
   }
-}
-
-export async function getHealth(): Promise<ModelHealthResponse> {
-  return request<ModelHealthResponse>("/health")
 }
 
 export async function predict(file: File): Promise<ModelPredictResponse> {

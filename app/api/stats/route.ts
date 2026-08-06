@@ -1,14 +1,13 @@
 import { NextRequest } from "next/server"
-import { getUserFromRequest } from "@/lib/auth/get-user"
-import { handleApiError, successResponse, errorResponse } from "@/lib/api-helpers"
-import * as statsService from "@/lib/services/stats.service"
+import { requireUser } from "@/lib/auth/get-user"
+import { handleApiError, successResponse } from "@/lib/api-helpers"
+import * as statsRepo from "@/lib/db/repositories/stats.repository"
 
 export async function GET(req: NextRequest) {
   try {
-    const user = await getUserFromRequest(req)
-    if (!user) return errorResponse("Authentication required", 401, "UNAUTHORIZED")
+    const user = await requireUser(req)
 
-    const stats = await statsService.getStats(user.id)
+    const stats = await statsRepo.findByUserId(user.id)
     return successResponse({ stats })
   } catch (err) {
     return handleApiError(err)

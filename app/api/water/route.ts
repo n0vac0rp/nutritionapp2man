@@ -1,15 +1,14 @@
 import { NextRequest } from "next/server"
-import { getUserFromRequest } from "@/lib/auth/get-user"
+import { requireUser } from "@/lib/auth/get-user"
 import { waterLogSchema } from "@/lib/validators/water.validator"
-import { parseBody, handleApiError, successResponse, errorResponse } from "@/lib/api-helpers"
-import * as waterService from "@/lib/services/water.service"
+import { parseBody, handleApiError, successResponse } from "@/lib/api-helpers"
+import * as waterRepo from "@/lib/db/repositories/water.repository"
 
 export async function GET(req: NextRequest) {
   try {
-    const user = await getUserFromRequest(req)
-    if (!user) return errorResponse("Authentication required", 401, "UNAUTHORIZED")
+    const user = await requireUser(req)
 
-    const intakes = await waterService.getIntakeHistory(user.id)
+    const intakes = await waterRepo.findByUserId(user.id)
     return successResponse({ intakes })
   } catch (err) {
     return handleApiError(err)
@@ -18,11 +17,10 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const user = await getUserFromRequest(req)
-    if (!user) return errorResponse("Authentication required", 401, "UNAUTHORIZED")
+    const user = await requireUser(req)
 
     const { date, amount } = await parseBody(req, waterLogSchema)
-    const intake = await waterService.logIntake(user.id, date, amount)
+    const intake = await waterRepo.upsert(user.id, date, amount)
     return successResponse({ intake })
   } catch (err) {
     return handleApiError(err)

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db/prisma"
-import { successResponse, errorResponse } from "@/lib/types/api-response"
+import { successResponse } from "@/lib/api-helpers"
 
 export async function GET() {
   let dbStatus = "disconnected"

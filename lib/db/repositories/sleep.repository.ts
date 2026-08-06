@@ -22,15 +22,19 @@ export async function upsert(
   date: string,
   data: {
     hoursSlept: number
-    sleepQuality: "POOR" | "FAIR" | "GOOD" | "EXCELLENT"
+    sleepQuality: "poor" | "fair" | "good" | "excellent"
     bedTime?: string
     wakeTime?: string
     notes?: string
   },
 ) {
+  const record = {
+    ...data,
+    sleepQuality: data.sleepQuality.toUpperCase() as "POOR" | "FAIR" | "GOOD" | "EXCELLENT",
+  }
   return prisma.sleepEntry.upsert({
     where: { userId_date: { userId, date: new Date(date) } },
-    create: { userId, date: new Date(date), ...data },
-    update: data,
+    create: { userId, date: new Date(date), ...record },
+    update: record,
   })
 }

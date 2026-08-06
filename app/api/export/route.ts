@@ -1,20 +1,19 @@
 import { NextRequest } from "next/server"
-import { getUserFromRequest } from "@/lib/auth/get-user"
-import { handleApiError, errorResponse } from "@/lib/api-helpers"
+import { requireUser } from "@/lib/auth/get-user"
+import { handleApiError } from "@/lib/api-helpers"
 import * as mealsService from "@/lib/services/meals.service"
-import * as profileService from "@/lib/services/profile.service"
-import * as statsService from "@/lib/services/stats.service"
+import * as profileRepo from "@/lib/db/repositories/profile.repository"
+import * as statsRepo from "@/lib/db/repositories/stats.repository"
 import { sanitizeUser } from "@/lib/auth/sanitize"
 
 export async function GET(req: NextRequest) {
   try {
-    const user = await getUserFromRequest(req)
-    if (!user) return errorResponse("Authentication required", 401, "UNAUTHORIZED")
+    const user = await requireUser(req)
 
     const [meals, profile, stats] = await Promise.all([
       mealsService.getMeals(user.id),
-      profileService.getProfile(user.id),
-      statsService.getStats(user.id),
+      profileRepo.findByUserId(user.id),
+      statsRepo.findByUserId(user.id),
     ])
 
     const data = {

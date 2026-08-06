@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server"
 import { predict, ModelServiceError } from "@/lib/api-client/model-client"
-import { successResponse, errorResponse } from "@/lib/types/api-response"
+import { successResponse, errorResponse } from "@/lib/api-helpers"
 
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"]
 const MAX_FILE_SIZE = 10 * 1024 * 1024

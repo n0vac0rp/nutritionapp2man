@@ -32,3 +32,13 @@ export async function findAllPaginated(page: number, limit: number) {
   ])
   return { users, total, page, totalPages: Math.ceil(total / limit) }
 }
+
+export async function count() {
+  return prisma.user.count()
+}
+
+export async function countActiveSince(since: Date) {
+  return prisma.user.count({
+    where: { lastLoginAt: { gte: since } },
+  })
+}

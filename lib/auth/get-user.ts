@@ -1,5 +1,6 @@
 import { verifyToken } from "@/lib/auth/jwt"
 import * as userRepo from "@/lib/db/repositories/user.repository"
+import { UnauthorizedError } from "@/lib/errors"
 
 export async function getUserFromRequest(req: Request) {
   const header = req.headers.get("authorization")
@@ -11,4 +12,10 @@ export async function getUserFromRequest(req: Request) {
   } catch {
     return null
   }
+}
+
+export async function requireUser(req: Request) {
+  const user = await getUserFromRequest(req)
+  if (!user) throw new UnauthorizedError()
+  return user
 }

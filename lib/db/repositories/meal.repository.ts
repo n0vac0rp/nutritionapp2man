@@ -108,6 +108,10 @@ export async function countByUserId(userId: string) {
   return prisma.meal.count({ where: { userId } })
 }
 
+export async function count() {
+  return prisma.meal.count()
+}
+
 export async function countDistinctDatesByUserId(userId: string) {
   const result = await prisma.meal.findMany({
     where: { userId },

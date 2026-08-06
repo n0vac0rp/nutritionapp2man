@@ -1415,28 +1415,6 @@ export const nigerianFoods: NigerianFood[] = [
   },
 ]
 
-export function calculatePortionCalories(food: NigerianFood, servings: number): number {
-  if (servings <= 1) return food.portionCalories.small
-  if (servings <= 2) return food.portionCalories.medium
-  if (servings <= 3) return food.portionCalories.large
-
-  // For servings > 3, calculate based on small portion as base
-  return food.portionCalories.small * servings
-}
-
-export function calculatePortionNutrition(food: NigerianFood, servings: number) {
-  const multiplier = servings
-  return {
-    calories: calculatePortionCalories(food, servings),
-    protein: food.protein * multiplier,
-    carbs: food.carbs * multiplier,
-    fats: food.fats * multiplier,
-    fiber: food.fiber * multiplier,
-    iron: food.iron * multiplier,
-    vitaminA: food.vitaminA * multiplier,
-  }
-}
-
 export interface FistNutritionResult {
   grams: number
   calories: number
@@ -1465,24 +1443,6 @@ export function calculateFistNutrition(
     iron: Number((food.iron * multiplier).toFixed(2)),
     vitaminA: Number((food.vitaminA * multiplier).toFixed(1)),
   }
-}
-
-export function getFoodById(id: string): NigerianFood | undefined {
-  return nigerianFoods.find((food) => food.id === id)
-}
-
-export function getFoodsByCategory(category: string): NigerianFood[] {
-  return nigerianFoods.filter((food) => food.category === category)
-}
-
-export function searchFoods(query: string): NigerianFood[] {
-  const lowercaseQuery = query.toLowerCase()
-  return nigerianFoods.filter(
-    (food) =>
-      food.name.toLowerCase().includes(lowercaseQuery) ||
-      food.category.toLowerCase().includes(lowercaseQuery) ||
-      food.description.toLowerCase().includes(lowercaseQuery),
-  )
 }
 
 export function getAllCategories(): string[] {
