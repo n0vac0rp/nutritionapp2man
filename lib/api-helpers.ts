@@ -1,21 +1,21 @@
 import { NextRequest } from "next/server"
-import { ZodSchema, ZodError } from "zod"
+import { z, ZodError } from "zod"
 import { AppError, ValidationError } from "@/lib/errors"
 import { errorResponse, successResponse } from "@/lib/types/api-response"
 
-export async function parseBody<T>(req: NextRequest, schema: ZodSchema<T>): Promise<T> {
+export async function parseBody<T>(req: NextRequest, schema: z.ZodType<T>): Promise<T> {
   try {
     const body = await req.json()
     return schema.parse(body)
   } catch (err) {
     if (err instanceof ZodError) {
-      throw new ValidationError(err.errors.map((e) => `${e.path.join(".")}: ${e.message}`).join("; "))
+      throw new ValidationError(err.issues.map((e) => `${e.path.join(".")}: ${e.message}`).join("; "))
     }
     throw new ValidationError("Invalid request body")
   }
 }
 
-export function parseQuery<T>(req: NextRequest, schema: ZodSchema<T>): T {
+export function parseQuery<T>(req: NextRequest, schema: z.ZodType<T>): T {
   const params: Record<string, string> = {}
   req.nextUrl.searchParams.forEach((value, key) => {
     params[key] = value
@@ -24,7 +24,7 @@ export function parseQuery<T>(req: NextRequest, schema: ZodSchema<T>): T {
     return schema.parse(params)
   } catch (err) {
     if (err instanceof ZodError) {
-      throw new ValidationError(err.errors.map((e) => `${e.path.join(".")}: ${e.message}`).join("; "))
+      throw new ValidationError(err.issues.map((e) => `${e.path.join(".")}: ${e.message}`).join("; "))
     }
     throw new ValidationError("Invalid query parameters")
   }
