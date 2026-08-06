@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: gluguide-web
+    runtime: docker
+    repo: https://github.com/Wolext4/nutritionapp2man
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: MODEL_SERVICE_URL
+        value: https://gluguide-model.onrender.com
+      - key: UPLOAD_MAX_SIZE_MB
+        value: "10"
+
+  - type: web
+    name: gluguide-model
+    runtime: docker
+    repo: https://github.com/Wolext4/nutritionapp2man
+    rootDir: model-service
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    healthCheckPath: /health
+    envVars:
+      - key: MODEL_PATH
+        value: /app/models/food_classifier.pth
+      - key: CLASS_NAMES_PATH
+        value: /app/models/class_names.json

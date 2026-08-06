@@ -23,7 +23,7 @@ const REQUEST_TIMEOUT_MS = 30000
 if (!process.env.MODEL_SERVICE_URL) {
   console.warn(
     "[model-client] MODEL_SERVICE_URL is not set; defaulting to http://localhost:3002. " +
-      "Set MODEL_SERVICE_URL on the deployed service (e.g. https://<model-service>.up.railway.app).",
+      "Set MODEL_SERVICE_URL on the deployed service (e.g. https://<service>.onrender.com).",
   )
 }
 
