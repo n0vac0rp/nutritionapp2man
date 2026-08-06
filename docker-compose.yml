@@ -33,6 +33,17 @@ services:
     mem_limit: 2g
     mem_reservation: 512m
 
+  migrate:
+    build:
+      context: .
+      target: migrate
+    environment:
+      DATABASE_URL: postgresql://gluguide_user:password@postgres:5432/gluguide
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
   next-app:
     build: .
     ports:
@@ -50,6 +61,8 @@ services:
         condition: service_healthy
       model-service:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
       interval: 15s

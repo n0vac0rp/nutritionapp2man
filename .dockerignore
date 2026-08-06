@@ -7,6 +7,9 @@ node_modules
 .env.example
 .DS_Store
 *.md
+*.tsbuildinfo
+.eslintcache
+coverage
 docs
 model-service
 scripts/add-sample-data.ts
