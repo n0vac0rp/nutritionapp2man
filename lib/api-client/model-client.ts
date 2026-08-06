@@ -20,6 +20,13 @@ export interface ModelHealthResponse {
 const MODEL_SERVICE_URL = process.env.MODEL_SERVICE_URL || "http://localhost:3002"
 const REQUEST_TIMEOUT_MS = 30000
 
+if (!process.env.MODEL_SERVICE_URL) {
+  console.warn(
+    "[model-client] MODEL_SERVICE_URL is not set; defaulting to http://localhost:3002. " +
+      "Set MODEL_SERVICE_URL on the deployed service (e.g. https://<model-service>.up.railway.app).",
+  )
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
