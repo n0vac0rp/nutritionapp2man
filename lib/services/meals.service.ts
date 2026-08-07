@@ -32,6 +32,16 @@ export async function deleteMeal(id: string) {
   await recalcStats(meal.userId)
 }
 
+export async function updateMeal(
+  id: string,
+  userId: string,
+  data: Parameters<typeof mealRepo.update>[1],
+) {
+  const meal = await mealRepo.update(id, data)
+  await recalcStats(userId)
+  return meal
+}
+
 async function recalcStats(userId: string) {
   const [total, distinctDays, meals] = await Promise.all([
     mealRepo.countByUserId(userId),

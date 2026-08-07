@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { SheetIcon as SleepIcon } from "lucide-react"
 import { useAuth } from "../contexts/auth-context"
 import { api } from "@/lib/api-client"
+import { toDateKey, todayKey } from "../utils/dates"
 
 interface SleepEntry {
   id: string; userId: string; date: string; hoursSlept: number
@@ -17,7 +18,7 @@ interface SleepEntry {
 
 export default function SleepTracker() {
   const { user } = useAuth()
-  const [currentDate, setCurrentDate] = useState(new Date().toISOString().split("T")[0])
+  const [currentDate, setCurrentDate] = useState(todayKey())
   const [entries, setEntries] = useState<SleepEntry[]>([])
   const [hoursSlept, setHoursSlept] = useState(8)
   const [sleepQuality, setSleepQuality] = useState<string>("good")
@@ -41,7 +42,7 @@ export default function SleepTracker() {
   const navigateDate = (delta: number) => {
     const d = new Date(currentDate)
     d.setDate(d.getDate() + delta)
-    setCurrentDate(d.toISOString().split("T")[0])
+    setCurrentDate(toDateKey(d))
   }
 
   const saveEntry = async () => {
@@ -63,13 +64,13 @@ export default function SleepTracker() {
     }
   }
 
-  const todayEntry = entries.find((e) => e.date === currentDate)
+  const todayEntry = entries.find((e) => toDateKey(e.date) === currentDate)
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <SleepIcon className="h-5 w-5 text-indigo-600" />
+          <SleepIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
           Sleep Tracker
         </CardTitle>
         <CardDescription>Log your nightly sleep</CardDescription>

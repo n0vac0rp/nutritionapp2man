@@ -99,7 +99,7 @@ export default function AIFoodScanner({ onFoodIdentified, onRescan }: AIFoodScan
     <div className="space-y-4 sm:space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+          <CardTitle className="flex items-center gap-2">
             <Camera className="h-5 w-5 text-green-600 dark:text-green-400" />
             AI Food Scanner
           </CardTitle>
@@ -144,6 +144,7 @@ export default function AIFoodScanner({ onFoodIdentified, onRescan }: AIFoodScan
                 <Button
                   variant="ghost"
                   size="icon"
+                  aria-label="Remove photo"
                   onClick={handleClear}
                   className="absolute top-2 right-2 bg-background/80 hover:bg-background rounded-full h-7 w-7"
                 >
@@ -155,7 +156,7 @@ export default function AIFoodScanner({ onFoodIdentified, onRescan }: AIFoodScan
                 <Button
                   onClick={handleScan}
                   disabled={isScanning}
-                  className="flex-1 bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600"
+                  className="flex-1 bg-primary hover:bg-primary/90"
                 >
                   {isScanning ? (
                     <>
@@ -188,8 +189,8 @@ export default function AIFoodScanner({ onFoodIdentified, onRescan }: AIFoodScan
       {result && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-              <CheckCircle className="h-5 w-5 text-green-600" />
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
               Classification Result
             </CardTitle>
             <CardDescription>Inference completed in {result.inference_time_ms.toFixed(0)} ms</CardDescription>
@@ -232,7 +233,7 @@ export default function AIFoodScanner({ onFoodIdentified, onRescan }: AIFoodScan
             {onFoodIdentified ? (
               <Button
                 onClick={() => onFoodIdentified(result.top_prediction.class_name)}
-                className="w-full mt-4 bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600"
+                className="w-full mt-4 bg-primary hover:bg-primary/90"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add {result.top_prediction.class_name} to Meal
@@ -267,7 +268,7 @@ export default function AIFoodScanner({ onFoodIdentified, onRescan }: AIFoodScan
                   <Utensils className="h-4 w-4 mr-2" />
                   {isSaving ? "Saving..." : `Log as ${result.top_prediction.class_name}`}
                 </Button>
-                {saveMsg && <p className="text-sm text-center text-green-600 mt-2">{saveMsg}</p>}
+                {saveMsg && <p className="text-sm text-center text-green-600 dark:text-green-400 mt-2">{saveMsg}</p>}
               </>
             )}
           </CardContent>

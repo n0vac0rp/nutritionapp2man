@@ -6,6 +6,7 @@ import { useMeals } from "../hooks/use-meals"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { calculateBMI, getDailyCalorieRecommendation, analyzeNutritionIntake } from "../utils/calculations"
+import { toDateKey, todayKey } from "../utils/dates"
 import { TrendingUp, Calendar, AlertTriangle, CheckCircle, BarChart3 } from "lucide-react"
 
 interface DayNutrition {
@@ -28,10 +29,10 @@ export default function NutritionSummary() {
   const [dailyCalories, setDailyCalories] = useState<number | null>(null)
 
   // Calculate date range
-  const endDate = new Date().toISOString().split("T")[0]
-  const startDate = new Date(Date.now() - (Number.parseInt(selectedPeriod) - 1) * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split("T")[0]
+  const endDate = todayKey()
+  const startDate = toDateKey(
+    new Date(Date.now() - (Number.parseInt(selectedPeriod) - 1) * 24 * 60 * 60 * 1000),
+  )
 
   const { meals, isLoading } = useMeals(undefined, startDate, endDate)
 
@@ -49,9 +50,9 @@ export default function NutritionSummary() {
     for (let i = 0; i < days; i++) {
       const date = new Date()
       date.setDate(date.getDate() - i)
-      const dateString = date.toISOString().split("T")[0]
+      const dateString = toDateKey(date)
 
-      const dayMeals = meals.filter((meal) => meal.date === dateString)
+      const dayMeals = meals.filter((meal) => toDateKey(meal.date) === dateString)
 
       const dayTotals = dayMeals.reduce(
         (totals, meal) => ({
@@ -130,7 +131,7 @@ export default function NutritionSummary() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-green-600" />
+            <BarChart3 className="h-5 w-5 text-green-600 dark:text-green-400" />
             Nutrition Summary
           </CardTitle>
           <CardDescription>Track your nutrition intake over time</CardDescription>
@@ -165,7 +166,7 @@ export default function NutritionSummary() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-blue-600" />
+                <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 Average Daily Intake
               </CardTitle>
               <CardDescription>Your average nutrition over the selected period</CardDescription>
@@ -176,7 +177,7 @@ export default function NutritionSummary() {
                   <div className="text-2xl font-bold mb-1">{averages.calories.toFixed(0)}</div>
                   <div className="text-sm text-muted-foreground mb-2">Calories</div>
                   <div className="text-xs text-muted-foreground">Target: {dailyCalories}</div>
-                  <div className="w-full bg-secondary rounded-full h-2 mt-2">
+                  <div className="w-full bg-muted rounded-full h-2 mt-2">
                     <div
                       className={`h-2 rounded-full transition-all ${getProgressColor(averages.calories, dailyCalories!)}`}
                       style={{ width: `${Math.min((averages.calories / dailyCalories!) * 100, 100)}%` }}
@@ -188,7 +189,7 @@ export default function NutritionSummary() {
                   <div className="text-2xl font-bold mb-1">{averages.protein.toFixed(1)}</div>
                   <div className="text-sm text-muted-foreground mb-2">Protein (g)</div>
                   <div className="text-xs text-muted-foreground">Target: {recommendations.protein}g</div>
-                  <div className="w-full bg-secondary rounded-full h-2 mt-2">
+                  <div className="w-full bg-muted rounded-full h-2 mt-2">
                     <div
                       className={`h-2 rounded-full transition-all ${getProgressColor(averages.protein, recommendations.protein)}`}
                       style={{ width: `${Math.min((averages.protein / recommendations.protein) * 100, 100)}%` }}
@@ -200,7 +201,7 @@ export default function NutritionSummary() {
                   <div className="text-2xl font-bold mb-1">{averages.fiber.toFixed(1)}</div>
                   <div className="text-sm text-muted-foreground mb-2">Fiber (g)</div>
                   <div className="text-xs text-muted-foreground">Target: {recommendations.fiber}g</div>
-                  <div className="w-full bg-secondary rounded-full h-2 mt-2">
+                  <div className="w-full bg-muted rounded-full h-2 mt-2">
                     <div
                       className={`h-2 rounded-full transition-all ${getProgressColor(averages.fiber, recommendations.fiber)}`}
                       style={{ width: `${Math.min((averages.fiber / recommendations.fiber) * 100, 100)}%` }}
@@ -212,7 +213,7 @@ export default function NutritionSummary() {
                   <div className="text-2xl font-bold mb-1">{averages.iron.toFixed(1)}</div>
                   <div className="text-sm text-muted-foreground mb-2">Iron (mg)</div>
                   <div className="text-xs text-muted-foreground">Target: {recommendations.iron}mg</div>
-                  <div className="w-full bg-secondary rounded-full h-2 mt-2">
+                  <div className="w-full bg-muted rounded-full h-2 mt-2">
                     <div
                       className={`h-2 rounded-full transition-all ${getProgressColor(averages.iron, recommendations.iron)}`}
                       style={{ width: `${Math.min((averages.iron / recommendations.iron) * 100, 100)}%` }}
@@ -225,9 +226,9 @@ export default function NutritionSummary() {
                 <div className="mt-6 p-4 border rounded-lg bg-muted/50">
                   <div className="flex items-center gap-2 mb-2">
                     {calorieAnalysis.status === "normal" ? (
-                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
                     ) : (
-                      <AlertTriangle className="h-5 w-5 text-orange-600" />
+                      <AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                     )}
                     <h4 className="font-medium">Calorie Intake Analysis</h4>
                   </div>
@@ -251,7 +252,7 @@ export default function NutritionSummary() {
                     {averages.carbs.toFixed(1)}g ({(((averages.carbs * 4) / averages.calories) * 100).toFixed(1)}%)
                   </span>
                 </div>
-                <div className="w-full bg-secondary rounded-full h-3">
+                <div className="w-full bg-muted rounded-full h-3">
                   <div
                     className="bg-blue-500 h-3 rounded-full"
                     style={{ width: `${((averages.carbs * 4) / averages.calories) * 100}%` }}
@@ -264,7 +265,7 @@ export default function NutritionSummary() {
                     {averages.protein.toFixed(1)}g ({(((averages.protein * 4) / averages.calories) * 100).toFixed(1)}%)
                   </span>
                 </div>
-                <div className="w-full bg-secondary rounded-full h-3">
+                <div className="w-full bg-muted rounded-full h-3">
                   <div
                     className="bg-green-500 h-3 rounded-full"
                     style={{ width: `${((averages.protein * 4) / averages.calories) * 100}%` }}
@@ -277,7 +278,7 @@ export default function NutritionSummary() {
                     {averages.fats.toFixed(1)}g ({(((averages.fats * 9) / averages.calories) * 100).toFixed(1)}%)
                   </span>
                 </div>
-                <div className="w-full bg-secondary rounded-full h-3">
+                <div className="w-full bg-muted rounded-full h-3">
                   <div
                     className="bg-orange-500 h-3 rounded-full"
                     style={{ width: `${((averages.fats * 9) / averages.calories) * 100}%` }}
@@ -300,7 +301,7 @@ export default function NutritionSummary() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-purple-600" />
+                <Calendar className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 Daily Breakdown
               </CardTitle>
               <CardDescription>Your nutrition intake for each day</CardDescription>

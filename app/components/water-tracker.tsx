@@ -1,66 +1,28 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
 import { Droplets } from "lucide-react"
 import { useAuth } from "../contexts/auth-context"
-import { api } from "@/lib/api-client"
+import { useWaterToday } from "../hooks/use-water"
+import { useProfile } from "../hooks/use-profile"
 
-interface WaterIntake {
-  id: string; userId: string; date: string; amount: number
-}
-
-export default function WaterTracker({ onWaterLogged }: { onWaterLogged?: () => void }) {
+export default function WaterTracker() {
   const { user } = useAuth()
-  const [waterIntake, setWaterIntake] = useState(0)
-  const [isLoading, setIsLoading] = useState(false)
+  const { amount: waterIntake, addWater, removeWater, isLoading } = useWaterToday()
+  const { profile } = useProfile()
 
-  const today = new Date().toISOString().split("T")[0]
+  if (!user) return null
 
-  const loadTodaysWater = useCallback(async () => {
-    if (!user) return
-    try {
-      const data = await api.get<{ intake: WaterIntake | null }>("/api/water/today")
-      setWaterIntake(data.intake?.amount || 0)
-    } catch {}
-  }, [user])
-
-  useEffect(() => {
-    loadTodaysWater()
-  }, [loadTodaysWater])
-
-  const addWater = async (amount: number) => {
-    if (!user || isLoading) return
-    setIsLoading(true)
-    try {
-      await api.post("/api/water", { date: today, amount: waterIntake + amount })
-      setWaterIntake((prev) => prev + amount)
-      onWaterLogged?.()
-    } catch {} finally { setIsLoading(false) }
-  }
-
-  const removeWater = async (amount: number) => {
-    if (!user || isLoading) return
-    const newAmount = Math.max(0, waterIntake - amount)
-    setIsLoading(true)
-    try {
-      await api.post("/api/water", { date: today, amount: newAmount })
-      setWaterIntake(newAmount)
-      onWaterLogged?.()
-    } catch {} finally { setIsLoading(false) }
-  }
-
-  const goal = 2000
+  const goal = profile?.waterGoal ?? 2000
   const pct = Math.min(100, Math.round((waterIntake / goal) * 100))
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Droplets className="h-5 w-5 text-blue-600" />
+          <Droplets className="h-5 w-5 text-blue-600 dark:text-blue-400" />
           Water Tracker
         </CardTitle>
         <CardDescription>Track your daily water intake</CardDescription>
@@ -86,7 +48,12 @@ export default function WaterTracker({ onWaterLogged }: { onWaterLogged?: () => 
           <Button variant="outline" size="sm" onClick={() => removeWater(500)} disabled={isLoading || waterIntake < 500}>
             -500ml
           </Button>
-          <Button variant="outline" size="sm" onClick={() => removeWater(waterIntake)} disabled={isLoading || waterIntake === 0}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => removeWater(waterIntake)}
+            disabled={isLoading || waterIntake === 0}
+          >
             Reset
           </Button>
         </div>

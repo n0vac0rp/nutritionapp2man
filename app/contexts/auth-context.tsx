@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useState, useEffect, useCallback } from "react"
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react"
 import { api, setToken, getToken, ApiError } from "@/lib/api-client"
 
 export interface User {
@@ -19,7 +19,8 @@ export interface User {
   occupation?: string | null
   healthConditions?: string[]
   fitnessGoals?: string[]
-  role: "user" | "admin"
+  // Prisma enums are returned verbatim, so these are the uppercase DB values.
+  role: "USER" | "ADMIN"
   tutorialCompleted?: boolean
   appRated?: boolean
   createdAt: string
@@ -51,6 +52,7 @@ interface AuthContextType {
   skipTutorial: () => void
   showRatingDialog: boolean
   closeRatingDialog: () => void
+  markAppRated: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -60,6 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const [showTutorial, setShowTutorial] = useState(false)
   const [showRatingDialog, setShowRatingDialog] = useState(false)
+  const ratingTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const checkAuth = useCallback(async () => {
     const t = getToken()
@@ -68,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return
     }
     try {
-      const u = await api.get<User>("/api/auth/me")
+      const { user: u } = await api.get<{ user: User }>("/api/auth/me")
       setUser(u)
       if (!u.tutorialCompleted) setShowTutorial(true)
     } catch {
@@ -83,15 +86,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth()
   }, [checkAuth])
 
+  // Depends on the individual flags rather than the whole `user` object: any
+  // profile update replaces `user`, which would otherwise cancel and restart
+  // the countdown every time.
+  const tutorialCompleted = user?.tutorialCompleted
+  const appRated = user?.appRated
+  useEffect(() => {
+    if (!tutorialCompleted || appRated) return
+    ratingTimer.current = setTimeout(() => {
+      setShowRatingDialog(true)
+      ratingTimer.current = null
+    }, 60000)
+    return () => {
+      if (ratingTimer.current) {
+        clearTimeout(ratingTimer.current)
+        ratingTimer.current = null
+      }
+    }
+  }, [tutorialCompleted, appRated])
+
   const login = async (email: string, password: string) => {
     try {
       const data = await api.post<{ user: User; token: string }>("/api/auth/login", { email, password })
       setToken(data.token)
       setUser(data.user)
       if (!data.user.tutorialCompleted) setShowTutorial(true)
-      setTimeout(() => {
-        if (!data.user.appRated) setShowRatingDialog(true)
-      }, 1500)
       return { success: true }
     } catch (err) {
       return { success: false, error: err instanceof ApiError ? err.message : "Login failed" }
@@ -125,7 +144,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const updateProfile = async (updates: Partial<User>) => {
     if (!user) return { success: false, error: "No user logged in" }
     try {
-      const updated = await api.patch<User>("/api/users/me", updates)
+      const { user: updated } = await api.patch<{ user: User }>("/api/users/me", updates)
       setUser(updated)
       return { success: true }
     } catch (err) {
@@ -139,14 +158,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const completeTutorial = () => {
     setShowTutorial(false)
+    updateProfile({ tutorialCompleted: true })
   }
 
   const skipTutorial = () => {
     setShowTutorial(false)
+    updateProfile({ tutorialCompleted: true })
   }
 
   const closeRatingDialog = () => {
     setShowRatingDialog(false)
+  }
+
+  const markAppRated = () => {
+    setShowRatingDialog(false)
+    updateProfile({ appRated: true })
   }
 
   return (
@@ -155,7 +181,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user, login, signup, logout, updateProfile,
         isLoading, refreshUser,
         showTutorial, completeTutorial, skipTutorial,
-        showRatingDialog, closeRatingDialog,
+        showRatingDialog, closeRatingDialog, markAppRated,
       }}
     >
       {children}

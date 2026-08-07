@@ -18,9 +18,9 @@ export default function Recommendations() {
       case "Underweight":
         return {
           priority: "high",
-          color: "text-blue-600",
+          color: "text-blue-600 dark:text-blue-400",
           bgColor: "bg-blue-50 dark:bg-blue-950",
-          borderColor: "border-blue-200",
+          borderColor: "border-blue-200 dark:border-blue-800",
           foods: [
             { name: "Moi Moi", benefit: "High protein and calories from beans", category: "Protein" },
             { name: "Groundnuts", benefit: "Healthy fats and protein for weight gain", category: "Snacks" },
@@ -40,9 +40,9 @@ export default function Recommendations() {
       case "Obese":
         return {
           priority: "high",
-          color: "text-red-600",
+          color: "text-red-600 dark:text-red-400",
           bgColor: "bg-red-50 dark:bg-red-950",
-          borderColor: "border-red-200",
+          borderColor: "border-red-200 dark:border-red-800",
           foods: [
             {
               name: "Ugwu (Fluted Pumpkin)",
@@ -65,9 +65,9 @@ export default function Recommendations() {
       default:
         return {
           priority: "normal",
-          color: "text-green-600",
+          color: "text-green-600 dark:text-green-400",
           bgColor: "bg-green-50 dark:bg-green-950",
-          borderColor: "border-green-200",
+          borderColor: "border-green-200 dark:border-green-800",
           foods: [
             { name: "Jollof rice", benefit: "Balanced carbs with vegetables", category: "Staples" },
             { name: "Egusi soup", benefit: "Good balance of protein, fats, and vegetables", category: "Soups" },
@@ -224,7 +224,7 @@ export default function Recommendations() {
                 {recommendations.foods.map((food, index) => (
                   <div
                     key={index}
-                    className="flex items-start gap-3 p-3 bg-background border rounded-lg text-white dark:text-foreground"
+                    className="flex items-start gap-3 p-3 bg-background border rounded-lg text-foreground"
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
@@ -233,7 +233,7 @@ export default function Recommendations() {
                           {food.category}
                         </Badge>
                       </div>
-                      <p className="text-xs text-gray-200 dark:text-muted-foreground">{food.benefit}</p>
+                      <p className="text-xs text-muted-foreground">{food.benefit}</p>
                     </div>
                   </div>
                 ))}
@@ -249,7 +249,7 @@ export default function Recommendations() {
                 {recommendations.tips.map((tip, index) => (
                   <div key={index} className="flex items-start gap-2">
                     <div className="w-1.5 h-1.5 bg-current rounded-full mt-2 flex-shrink-0" />
-                    <p className="text-sm text-white dark:text-foreground">{tip}</p>
+                    <p className="text-sm text-foreground">{tip}</p>
                   </div>
                 ))}
               </div>
@@ -262,7 +262,7 @@ export default function Recommendations() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Heart className="h-5 w-5 text-red-600" />
+            <Heart className="h-5 w-5 text-red-600 dark:text-red-400" />
             Nigerian Cultural Nutrition Tips
           </CardTitle>
           <CardDescription>Embrace healthy Nigerian eating traditions</CardDescription>
@@ -286,7 +286,7 @@ export default function Recommendations() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Apple className="h-5 w-5 text-green-600" />
+            <Apple className="h-5 w-5 text-green-600 dark:text-green-400" />
             Sample 3-Day Meal Plan
           </CardTitle>
           <CardDescription>
@@ -297,22 +297,22 @@ export default function Recommendations() {
           <div className="space-y-4">
             {currentMealPlan.map((day, index) => (
               <div key={index} className="border rounded-lg p-4">
-                <h4 className="font-semibold text-green-700 mb-3">{day.day}</h4>
+                <h4 className="font-semibold text-green-700 dark:text-green-300 mb-3">{day.day}</h4>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
                   <div>
-                    <p className="font-medium text-orange-600 mb-1">Breakfast</p>
+                    <p className="font-medium text-orange-600 dark:text-orange-400 mb-1">Breakfast</p>
                     <p className="text-muted-foreground">{day.breakfast}</p>
                   </div>
                   <div>
-                    <p className="font-medium text-blue-600 mb-1">Lunch</p>
+                    <p className="font-medium text-blue-600 dark:text-blue-400 mb-1">Lunch</p>
                     <p className="text-muted-foreground">{day.lunch}</p>
                   </div>
                   <div>
-                    <p className="font-medium text-purple-600 mb-1">Dinner</p>
+                    <p className="font-medium text-purple-600 dark:text-purple-400 mb-1">Dinner</p>
                     <p className="text-muted-foreground">{day.dinner}</p>
                   </div>
                   <div>
-                    <p className="font-medium text-green-600 mb-1">Snack</p>
+                    <p className="font-medium text-green-600 dark:text-green-400 mb-1">Snack</p>
                     <p className="text-muted-foreground">{day.snack}</p>
                   </div>
                 </div>
@@ -323,10 +323,10 @@ export default function Recommendations() {
       </Card>
 
       {/* Future AI/IoT Features */}
-      <Card className="border-purple-200 bg-purple-50 dark:bg-purple-950">
+      <Card className="border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-purple-600" />
+            <AlertTriangle className="h-5 w-5 text-purple-600 dark:text-purple-400" />
             Coming Soon: AI & IoT Features
           </CardTitle>
           <CardDescription>Future enhancements to make nutrition monitoring even easier</CardDescription>

@@ -13,6 +13,7 @@ export interface UserProfile {
   breakfastReminderTime: string | null; lunchReminderTime: string | null; dinnerReminderTime: string | null
   weeklyCalorieTarget: number | null; weeklyProteinTarget: number | null; weeklyExerciseDays: number | null
   suggestedFoods: string[]; avoidFoods: string[]; mealPlanPreference: string | null; supplementSuggestions: string[]
+  waterGoal: number
   updatedAt: string
 }
 

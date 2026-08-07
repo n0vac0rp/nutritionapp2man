@@ -13,4 +13,6 @@ export const updateUserSchema = z.object({
   occupation: z.string().max(200).optional(),
   healthConditions: z.array(z.string()).optional(),
   fitnessGoals: z.array(z.string()).optional(),
+  tutorialCompleted: z.boolean().optional(),
+  appRated: z.boolean().optional(),
 })

@@ -8,7 +8,7 @@ import Tutorial from "./components/tutorial"
 import RatingDialog from "./components/rating-dialog"
 
 export default function Home() {
-  const { user, isLoading, showTutorial, completeTutorial, skipTutorial, showRatingDialog, closeRatingDialog } =
+  const { user, isLoading, showTutorial, completeTutorial, skipTutorial, showRatingDialog, closeRatingDialog, markAppRated } =
     useAuth()
 
   if (isLoading) {
@@ -24,7 +24,7 @@ export default function Home() {
       <Dashboard />
       {showTutorial && <Tutorial onComplete={completeTutorial} onSkip={skipTutorial} />}
       {showRatingDialog && user && (
-        <RatingDialog isOpen={showRatingDialog} onClose={closeRatingDialog} userId={user.id} />
+        <RatingDialog isOpen={showRatingDialog} onClose={closeRatingDialog} userId={user.id} onRated={markAppRated} />
       )}
     </>
   )

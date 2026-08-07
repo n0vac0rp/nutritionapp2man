@@ -23,4 +23,5 @@ export const updateProfileSchema = z.object({
   avoidFoods: z.array(z.string()).optional(),
   mealPlanPreference: z.string().optional(),
   supplementSuggestions: z.array(z.string()).optional(),
+  waterGoal: z.number().min(0).max(20000).optional(),
 })

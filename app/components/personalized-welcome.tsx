@@ -34,7 +34,7 @@ export default function PersonalizedWelcome() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+        <CardTitle className="flex items-center gap-2">
           <Sun className="h-5 w-5 text-amber-500" />
           {greeting}, {firstName}!
         </CardTitle>

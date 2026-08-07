@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useAuth } from "../contexts/auth-context"
 import { useProfile } from "../hooks/use-profile"
 import { api, getToken } from "@/lib/api-client"
@@ -12,42 +12,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { calculateBMI } from "../utils/calculations"
-import { Save, AlertCircle, CheckCircle, Download, Upload } from "lucide-react"
-// At the top, add the import for UserProfileDetails
-import UserProfileDetails from "./user-profile-details"
-// Add the import for Tabs components at the top
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Save, AlertCircle, CheckCircle, Download, Upload, Droplets } from "lucide-react"
 
-// Replace the entire component with a tabbed interface
 export default function ProfileSettings() {
-  const { user } = useAuth()
-  const [activeTab, setActiveTab] = useState("details")
-
-  if (!user) return null
-
-  return (
-    <div className="space-y-6">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="details">Profile Details</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="details">
-          <UserProfileDetails />
-        </TabsContent>
-
-        <TabsContent value="settings">
-          <ProfileSettingsForm />
-        </TabsContent>
-      </Tabs>
-    </div>
-  )
-}
-
-// Move the existing profile settings form to a separate component
-function ProfileSettingsForm() {
   const { user, updateProfile } = useAuth()
   const { profile, updateProfile: updateUserProfile } = useProfile()
   const [isUpdating, setIsUpdating] = useState(false)
@@ -65,25 +32,45 @@ function ProfileSettingsForm() {
     gender: user?.gender || "",
     height: user?.height?.toString() ?? "",
     weight: user?.weight?.toString() ?? "",
+    waistCircumference: user?.waistCircumference?.toString() ?? "",
+    hipCircumference: user?.hipCircumference?.toString() ?? "",
+    fistCircumference: user?.fistCircumference?.toString() ?? "",
   })
 
   const [profileData, setProfileData] = useState({
     culturalBackground: profile?.culturalBackground || [],
     dietaryRestrictions: profile?.dietaryRestrictions || [],
-    activityLevel: profile?.activityLevel || "moderate",
+    activityLevel: (profile?.activityLevel || "moderate").toLowerCase(),
     healthGoals: profile?.healthGoals || [],
     notifications: profile?.notifications ?? true,
     dataSharing: profile?.dataSharing ?? false,
-    units: profile?.units || "metric",
+    units: (profile?.units || "metric").toLowerCase(),
+    waterGoal: profile?.waterGoal ?? 2000,
   })
 
-  if (!user) return null
+  /*
+   * `profile` is fetched asynchronously, so the state above is initialized from
+   * `null` on first render. Without this, the form would show defaults and
+   * saving would overwrite the user's stored preferences with them. Applied
+   * once so a background refetch can't discard an in-progress edit.
+   */
+  const profileHydrated = useRef(false)
+  useEffect(() => {
+    if (!profile || profileHydrated.current) return
+    profileHydrated.current = true
+    setProfileData({
+      culturalBackground: profile.culturalBackground || [],
+      dietaryRestrictions: profile.dietaryRestrictions || [],
+      activityLevel: (profile.activityLevel || "moderate").toLowerCase(),
+      healthGoals: profile.healthGoals || [],
+      notifications: profile.notifications ?? true,
+      dataSharing: profile.dataSharing ?? false,
+      units: (profile.units || "metric").toLowerCase(),
+      waterGoal: profile.waterGoal ?? 2000,
+    })
+  }, [profile])
 
-  const currentBMI = calculateBMI(user.weight, user.height)
-  const newBMI =
-    formData.height && formData.weight
-      ? calculateBMI(Number.parseFloat(formData.weight), Number.parseFloat(formData.height))
-      : null
+  if (!user) return null
 
   const exportMonthlyLogs = async () => {
     if (!user) return
@@ -132,25 +119,12 @@ function ProfileSettingsForm() {
       const height = Number.parseFloat(formData.height)
       const weight = Number.parseFloat(formData.weight)
 
-      if (age <= 0) {
-        setMessage({ type: "error", text: "Age must be a positive number" })
+      if (age <= 0 || height <= 0 || weight <= 0) {
+        setMessage({ type: "error", text: "Age, height, and weight must be positive numbers" })
         setIsUpdating(false)
         return
       }
 
-      if (height <= 0) {
-        setMessage({ type: "error", text: "Height must be a positive number" })
-        setIsUpdating(false)
-        return
-      }
-
-      if (weight <= 0) {
-        setMessage({ type: "error", text: "Weight must be a positive number" })
-        setIsUpdating(false)
-        return
-      }
-
-      // Update user profile
       const userResult = await updateProfile({
         fullName: formData.fullName,
         email: formData.email,
@@ -158,6 +132,9 @@ function ProfileSettingsForm() {
         gender: formData.gender as "male" | "female" | "other",
         height,
         weight,
+        waistCircumference: formData.waistCircumference ? Number.parseFloat(formData.waistCircumference) : undefined,
+        hipCircumference: formData.hipCircumference ? Number.parseFloat(formData.hipCircumference) : undefined,
+        fistCircumference: formData.fistCircumference ? Number.parseFloat(formData.fistCircumference) : undefined,
       })
 
       if (!userResult.success) {
@@ -166,7 +143,6 @@ function ProfileSettingsForm() {
         return
       }
 
-      // Update user preferences
       const profileResult = await updateUserProfile({
         culturalBackground: profileData.culturalBackground,
         dietaryRestrictions: profileData.dietaryRestrictions,
@@ -175,6 +151,7 @@ function ProfileSettingsForm() {
         notifications: profileData.notifications,
         dataSharing: profileData.dataSharing,
         units: profileData.units,
+        waterGoal: Number(profileData.waterGoal) || 2000,
       })
 
       if (profileResult.success) {
@@ -189,37 +166,6 @@ function ProfileSettingsForm() {
       setIsUpdating(false)
     }
   }
-
-  /*
-   * Import feature disabled: no /api/import route exists yet (would 404).
-   * Restore by uncommenting this handler and the Import Data input below,
-   * then implement POST /api/import.
-   */
-  // const importData = (event: React.ChangeEvent<HTMLInputElement>) => {
-  //   const file = event.target.files?.[0]
-  //   if (!file) return
-
-  //   const reader = new FileReader()
-  //   reader.onload = async (e) => {
-  //     try {
-  //       const jsonData = e.target?.result as string
-  //       await api.post("/api/import", { jsonData })
-  //       setMessage({ type: "success", text: "Data imported successfully! Please refresh the page." })
-  //       setTimeout(() => window.location.reload(), 2000)
-  //     } catch (error) {
-  //       setMessage({ type: "error", text: "Invalid file format" })
-  //     }
-  //   }
-  //   reader.readAsText(file)
-  // }
-
-  const hasChanges =
-    formData.fullName !== user.fullName ||
-    formData.email !== user.email ||
-    formData.age !== user.age.toString() ||
-    formData.gender !== user.gender ||
-    formData.height !== user.height.toString() ||
-    formData.weight !== user.weight.toString()
 
   const culturalGroups = [
     { id: "yoruba", name: "Yoruba", description: "Western Nigeria cuisine" },
@@ -257,7 +203,7 @@ function ProfileSettingsForm() {
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Export Monthly Logs</CardTitle>
+          <CardTitle>Export Monthly Logs</CardTitle>
           <CardDescription>Download your nutrition data for a specific month</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -293,24 +239,11 @@ function ProfileSettingsForm() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Data Management</CardTitle>
-          <CardDescription>Import or backup your complete nutrition data</CardDescription>
+          <CardTitle>Data Management</CardTitle>
+          <CardDescription>Backup your complete nutrition data</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col sm:flex-row gap-3">
-            {/* Import Data input disabled: /api/import is not implemented yet. */}
-            {/* <div className="flex-1">
-              <Label htmlFor="import-data" className="text-sm">
-                Import Data
-              </Label>
-              <Input
-                id="import-data"
-                type="file"
-                accept=".json"
-                onChange={importData}
-                className="bg-background text-sm"
-              />
-            </div> */}
             <div className="flex items-end">
               <Button
                 onClick={async () => {
@@ -328,7 +261,7 @@ function ProfileSettingsForm() {
                     URL.revokeObjectURL(url)
                   } catch {}
                 }}
-                className="bg-green-600 hover:bg-green-700 text-white h-9 px-4 text-sm"
+                className="bg-primary hover:bg-primary/90 text-white h-9 px-4 text-sm"
               >
                 <Upload className="h-4 w-4 mr-2" />
                 Backup All
@@ -341,15 +274,13 @@ function ProfileSettingsForm() {
         </CardContent>
       </Card>
 
-      {/* Edit Profile Form */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Edit Profile</CardTitle>
+          <CardTitle>Edit Profile</CardTitle>
           <CardDescription>Update your information to get more accurate recommendations</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Basic Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label htmlFor="fullName" className="text-sm">
@@ -378,7 +309,7 @@ function ProfileSettingsForm() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               <div className="space-y-1">
                 <Label htmlFor="age" className="text-sm">
                   Age *
@@ -422,6 +353,53 @@ function ProfileSettingsForm() {
               </div>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="waist" className="text-sm">
+                  Waist (cm)
+                </Label>
+                <Input
+                  id="waist"
+                  type="number"
+                  step="0.1"
+                  placeholder="80"
+                  value={formData.waistCircumference}
+                  onChange={(e) => setFormData({ ...formData, waistCircumference: e.target.value })}
+                  className="bg-background h-9 text-sm"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="hip" className="text-sm">
+                  Hip (cm)
+                </Label>
+                <Input
+                  id="hip"
+                  type="number"
+                  step="0.1"
+                  placeholder="95"
+                  value={formData.hipCircumference}
+                  onChange={(e) => setFormData({ ...formData, hipCircumference: e.target.value })}
+                  className="bg-background h-9 text-sm"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="fist" className="text-sm">
+                  Fist Circumference (cm)
+                </Label>
+                <Input
+                  id="fist"
+                  type="number"
+                  step="0.1"
+                  min="5"
+                  max="50"
+                  placeholder="25"
+                  value={formData.fistCircumference}
+                  onChange={(e) => setFormData({ ...formData, fistCircumference: e.target.value })}
+                  className="bg-background h-9 text-sm"
+                />
+              </div>
+            </div>
+
             <div className="space-y-1">
               <Label htmlFor="gender" className="text-sm">
                 Gender *
@@ -438,7 +416,23 @@ function ProfileSettingsForm() {
               </Select>
             </div>
 
-            {/* Cultural Food Preferences */}
+            <div className="space-y-1">
+              <Label htmlFor="water-goal" className="text-sm flex items-center gap-1">
+                <Droplets className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                Daily Water Goal (ml)
+              </Label>
+              <Input
+                id="water-goal"
+                type="number"
+                min="0"
+                step="50"
+                value={profileData.waterGoal}
+                onChange={(e) => setProfileData({ ...profileData, waterGoal: Number(e.target.value) })}
+                className="bg-background h-9 text-sm max-w-xs"
+              />
+              <p className="text-xs text-muted-foreground">Used by the water tracker on Today</p>
+            </div>
+
             <div className="space-y-4">
               <h4 className="font-medium text-lg">Cultural Food Preferences</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -448,7 +442,7 @@ function ProfileSettingsForm() {
                     className={`p-4 border rounded-lg cursor-pointer transition-all hover:border-primary/50 ${
                       profileData.culturalBackground.includes(group.id)
                         ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                        : "border-gray-200 dark:border-gray-700 hover:bg-muted/50"
+                        : "border-border hover:bg-muted/50"
                     }`}
                     onClick={() => toggleCulturalBackground(group.id)}
                   >
@@ -459,7 +453,6 @@ function ProfileSettingsForm() {
               </div>
             </div>
 
-            {/* Health Goals */}
             <div className="space-y-4">
               <h4 className="font-medium text-lg">Health Goals</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -469,7 +462,7 @@ function ProfileSettingsForm() {
                     className={`p-4 border rounded-lg cursor-pointer transition-all hover:border-primary/50 ${
                       profileData.healthGoals.includes(goal.id)
                         ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                        : "border-gray-200 dark:border-gray-700 hover:bg-muted/50"
+                        : "border-border hover:bg-muted/50"
                     }`}
                     onClick={() => toggleHealthGoal(goal.id)}
                   >
@@ -479,7 +472,6 @@ function ProfileSettingsForm() {
               </div>
             </div>
 
-            {/* Activity Level */}
             <div className="space-y-1">
               <Label htmlFor="activity" className="text-sm">
                 Activity Level
@@ -505,7 +497,6 @@ function ProfileSettingsForm() {
               </Select>
             </div>
 
-            {/* Settings */}
             <div className="space-y-4">
               <h4 className="font-medium text-lg">Settings</h4>
               <div className="space-y-6">
@@ -542,8 +533,8 @@ function ProfileSettingsForm() {
               <div
                 className={`flex items-center gap-2 text-sm p-3 rounded-lg ${
                   message.type === "success"
-                    ? "bg-green-50 text-green-700 border border-green-200"
-                    : "bg-red-50 text-red-700 border border-red-200"
+                    ? "bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800"
+                    : "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800"
                 }`}
               >
                 {message.type === "success" ? <CheckCircle className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
@@ -551,7 +542,7 @@ function ProfileSettingsForm() {
               </div>
             )}
 
-            <Button type="submit" disabled={isUpdating} className="w-full bg-green-600 hover:bg-green-700 h-10 text-sm">
+            <Button type="submit" disabled={isUpdating} className="w-full bg-primary hover:bg-primary/90 h-10 text-sm">
               <Save className="h-4 w-4 mr-2" />
               {isUpdating ? "Saving Changes..." : "Save Changes"}
             </Button>

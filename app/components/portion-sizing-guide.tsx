@@ -107,7 +107,7 @@ export default function PortionSizingGuide() {
         <Card className="border-green-200 dark:border-green-800">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Hand className="h-5 w-5 text-green-600" />
+              <Hand className="h-5 w-5 text-green-600 dark:text-green-400" />
               Your Personalised Portion Weight
             </CardTitle>
             <CardDescription>
@@ -129,7 +129,7 @@ export default function PortionSizingGuide() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Hand className="h-5 w-5 text-blue-600" />
+            <Hand className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="24"
@@ -140,7 +140,7 @@ export default function PortionSizingGuide() {
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="lucide lucide-hand h-5 w-5 text-blue-600"
+              className="lucide lucide-hand h-5 w-5 text-blue-600 dark:text-blue-400"
             >
               <path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"></path>
               <path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2"></path>
@@ -173,7 +173,7 @@ export default function PortionSizingGuide() {
 
                   <div className="text-center space-y-2">
                     <div className="flex items-center justify-center gap-2">
-                      <Hand className="h-4 w-4 text-blue-600" />
+                      <Hand className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                       <span className="font-medium text-sm">Hand Method</span>
                     </div>
                     <p className="text-sm text-muted-foreground font-medium">{portion.handMethod}</p>

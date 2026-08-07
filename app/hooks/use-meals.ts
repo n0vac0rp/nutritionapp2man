@@ -65,5 +65,25 @@ export function useMeals(date?: string, startDate?: string, endDate?: string) {
     }
   }
 
-  return { meals, isLoading, error: error ? String(error) : null, addMeal, deleteMeal, refetch: () => queryClient.invalidateQueries({ queryKey: key }) }
+  const updateMeal = async (
+    mealId: string,
+    mealData: {
+      type: string; date: string; time: string; foods: {
+        foodId?: string; name: string; grams: number
+        nutrition: { calories: number; protein: number; carbs: number; fats: number; fiber: number; iron: number; vitaminA: number }
+      }[]
+    },
+  ) => {
+    if (!user) return { success: false, error: "No user logged in" }
+    try {
+      const data = await api.patch<{ meal: Meal }>(`/api/meals/${mealId}`, mealData)
+      queryClient.invalidateQueries({ queryKey: ["meals", user?.id] })
+      queryClient.invalidateQueries({ queryKey: ["stats", user?.id] })
+      return { success: true, meal: data.meal }
+    } catch (err: any) {
+      return { success: false, error: err?.message || "Failed to update meal" }
+    }
+  }
+
+  return { meals, isLoading, error: error ? String(error) : null, addMeal, deleteMeal, updateMeal, refetch: () => queryClient.invalidateQueries({ queryKey: key }) }
 }

@@ -104,6 +104,79 @@ export async function remove(id: string) {
   return prisma.meal.delete({ where: { id } })
 }
 
+export async function update(
+  id: string,
+  data: {
+    type: Prisma.EnumMealTypeFilter["equals"]
+    date: string
+    time: string
+    mood?: string
+    notes?: string
+    foods: {
+      foodId?: string
+      name: string
+      grams: number
+      calories: number
+      protein: number
+      carbs: number
+      fats: number
+      fiber: number
+      iron: number
+      vitaminA: number
+    }[]
+  },
+) {
+  const totalCalories = data.foods.reduce((s, f) => s + f.calories, 0)
+  const totalProtein = data.foods.reduce((s, f) => s + f.protein, 0)
+  const totalCarbs = data.foods.reduce((s, f) => s + f.carbs, 0)
+  const totalFats = data.foods.reduce((s, f) => s + f.fats, 0)
+  const totalFiber = data.foods.reduce((s, f) => s + f.fiber, 0)
+  const totalIron = data.foods.reduce((s, f) => s + f.iron, 0)
+  const totalVitaminA = data.foods.reduce((s, f) => s + f.vitaminA, 0)
+
+  return prisma.$transaction(async (tx) => {
+    await tx.mealFood.deleteMany({ where: { mealId: id } })
+    await tx.nutritionTotal.deleteMany({ where: { mealId: id } })
+
+    return tx.meal.update({
+      where: { id },
+      data: {
+        type: data.type as Prisma.MealUpdateInput["type"],
+        date: new Date(data.date),
+        time: data.time,
+        mood: data.mood as Prisma.MealUpdateInput["mood"],
+        notes: data.notes,
+        foods: {
+          create: data.foods.map((f) => ({
+            foodId: f.foodId || null,
+            name: f.name,
+            grams: f.grams,
+            calories: f.calories,
+            protein: f.protein,
+            carbs: f.carbs,
+            fats: f.fats,
+            fiber: f.fiber,
+            iron: f.iron,
+            vitaminA: f.vitaminA,
+          })),
+        },
+        totalNutrition: {
+          create: {
+            calories: totalCalories,
+            protein: totalProtein,
+            carbs: totalCarbs,
+            fats: totalFats,
+            fiber: totalFiber,
+            iron: totalIron,
+            vitaminA: totalVitaminA,
+          },
+        },
+      },
+      include: mealInclude,
+    })
+  })
+}
+
 export async function countByUserId(userId: string) {
   return prisma.meal.count({ where: { userId } })
 }

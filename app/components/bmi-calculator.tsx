@@ -8,9 +8,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { calculateBMI, calculateEnhancedHealthMetrics, getDailyCalorieRecommendation, calculatePortionWeight } from "../utils/calculations"
-import { Calculator, TrendingUp, Target, AlertCircle, Activity } from "lucide-react"
+import { Calculator, TrendingUp, Target, AlertCircle, Activity, ChevronDown, ChevronUp } from "lucide-react"
 
-export default function BMICalculator() {
+export default function BMICalculator({ compact = false }: { compact?: boolean } = {}) {
   const { user, updateProfile } = useAuth()
   const [height, setHeight] = useState(user?.height?.toString() ?? "")
   const [weight, setWeight] = useState(user?.weight?.toString() ?? "")
@@ -18,6 +18,7 @@ export default function BMICalculator() {
   const [hipCircumference, setHipCircumference] = useState(user?.hipCircumference?.toString() ?? "")
   const [fistCircumference, setFistCircumference] = useState(user?.fistCircumference?.toString() ?? "")
   const [isUpdating, setIsUpdating] = useState(false)
+  const [showReferences, setShowReferences] = useState(false)
 
   if (!user) return null
 
@@ -78,13 +79,13 @@ export default function BMICalculator() {
   const getBMIColor = (category: string) => {
     switch (category) {
       case "Underweight":
-        return "text-blue-600"
+        return "text-blue-600 dark:text-blue-400"
       case "Normal":
-        return "text-green-600"
+        return "text-green-600 dark:text-green-400"
       case "Overweight":
-        return "text-orange-600"
+        return "text-orange-600 dark:text-orange-400"
       case "Obese":
-        return "text-red-600"
+        return "text-red-600 dark:text-red-400"
       default:
         return "text-gray-600"
     }
@@ -104,13 +105,13 @@ export default function BMICalculator() {
   const getRiskColor = (risk: string) => {
     switch (risk) {
       case "Low":
-        return "text-green-600"
+        return "text-green-600 dark:text-green-400"
       case "Moderate":
-        return "text-yellow-600"
+        return "text-yellow-600 dark:text-yellow-400"
       case "High":
-        return "text-orange-600"
+        return "text-orange-600 dark:text-orange-400"
       case "Very High":
-        return "text-red-600"
+        return "text-red-600 dark:text-red-400"
       default:
         return "text-gray-600"
     }
@@ -122,7 +123,7 @@ export default function BMICalculator() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Calculator className="h-5 w-5 text-green-600" />
+            <Calculator className="h-5 w-5 text-green-600 dark:text-green-400" />
             Your Current Health Metrics
           </CardTitle>
           <CardDescription>Based on your profile information</CardDescription>
@@ -130,7 +131,7 @@ export default function BMICalculator() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="text-center">
-              <div className="text-3xl font-bold mb-2">{currentBMI.bmi}</div>
+              <div className="text-2xl font-bold mb-2">{currentBMI.bmi}</div>
               <Badge variant={getBMIBadgeVariant(currentBMI.category)} className="mb-2">
                 {currentBMI.category}
               </Badge>
@@ -204,7 +205,7 @@ export default function BMICalculator() {
                 <ul className="text-sm text-muted-foreground space-y-1">
                   {currentEnhanced.combinedRecommendations.slice(0, 4).map((rec, index) => (
                     <li key={index} className="flex items-start gap-2">
-                      <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0" />
+                      <div className="w-1.5 h-1.5 bg-brand rounded-full mt-2 flex-shrink-0" />
                       {rec}
                     </li>
                   ))}
@@ -216,6 +217,7 @@ export default function BMICalculator() {
       </Card>
 
       {/* Health Metrics Calculator */}
+      {!compact && (
       <Card>
         <CardHeader>
           <CardTitle>Update Your Measurements</CardTitle>
@@ -353,18 +355,21 @@ export default function BMICalculator() {
                 hipCircumference === (user.hipCircumference?.toString() || "") &&
                 fistCircumference === (user.fistCircumference?.toString() || ""))
             }
-            className="w-full bg-green-600 hover:bg-green-700"
+            className="w-full bg-primary hover:bg-primary/90"
           >
             {isUpdating ? "Updating..." : "Update Profile"}
           </Button>
         </CardContent>
       </Card>
+      )}
 
+      {!compact && (
+      <>
       {/* Waist-to-Hip Ratio (WHR) Standards */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-purple-600" />
+            <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400" />
             Waist-to-Hip Ratio (WHR) Standards
           </CardTitle>
         </CardHeader>
@@ -372,7 +377,7 @@ export default function BMICalculator() {
           <div className="space-y-3">
             <div className="flex items-center justify-between p-3 border rounded-lg bg-blue-50 dark:bg-blue-950">
               <div>
-                <div className="font-medium text-blue-600">Men - Low Risk</div>
+                <div className="font-medium text-blue-600 dark:text-blue-400">Men - Low Risk</div>
                 <div className="text-sm text-muted-foreground">WHR ≤ 0.90</div>
               </div>
               <div className="text-sm text-muted-foreground">Healthy range</div>
@@ -380,7 +385,7 @@ export default function BMICalculator() {
 
             <div className="flex items-center justify-between p-3 border rounded-lg">
               <div>
-                <div className="font-medium text-red-600">Men - High Risk</div>
+                <div className="font-medium text-red-600 dark:text-red-400">Men - High Risk</div>
                 <div className="text-sm text-muted-foreground">WHR {">"} 0.90</div>
               </div>
               <div className="text-sm text-muted-foreground">Increased health risks</div>
@@ -388,7 +393,7 @@ export default function BMICalculator() {
 
             <div className="flex items-center justify-between p-3 border rounded-lg bg-pink-50 dark:bg-pink-950">
               <div>
-                <div className="font-medium text-pink-600">Women - Low Risk</div>
+                <div className="font-medium text-pink-600 dark:text-pink-400">Women - Low Risk</div>
                 <div className="text-sm text-muted-foreground">WHR ≤ 0.85</div>
               </div>
               <div className="text-sm text-muted-foreground">Healthy range</div>
@@ -396,7 +401,7 @@ export default function BMICalculator() {
 
             <div className="flex items-center justify-between p-3 border rounded-lg">
               <div>
-                <div className="font-medium text-red-600">Women - High Risk</div>
+                <div className="font-medium text-red-600 dark:text-red-400">Women - High Risk</div>
                 <div className="text-sm text-muted-foreground">WHR {">"} 0.85</div>
               </div>
               <div className="text-sm text-muted-foreground">Increased health risks</div>
@@ -431,7 +436,7 @@ export default function BMICalculator() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-blue-600" />
+            <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             BMI Categories (WHO Standards)
           </CardTitle>
         </CardHeader>
@@ -439,7 +444,7 @@ export default function BMICalculator() {
           <div className="space-y-3">
             <div className="flex items-center justify-between p-3 border rounded-lg">
               <div>
-                <div className="font-medium text-blue-600">Underweight</div>
+                <div className="font-medium text-blue-600 dark:text-blue-400">Underweight</div>
                 <div className="text-sm text-muted-foreground">BMI less than 18.5</div>
               </div>
               <div className="text-sm text-muted-foreground">May need to gain weight</div>
@@ -447,7 +452,7 @@ export default function BMICalculator() {
 
             <div className="flex items-center justify-between p-3 border rounded-lg bg-green-50 dark:bg-green-950">
               <div>
-                <div className="font-medium text-green-600">Normal Weight</div>
+                <div className="font-medium text-green-600 dark:text-green-400">Normal Weight</div>
                 <div className="text-sm text-muted-foreground">BMI 18.5 - 24.9</div>
               </div>
               <div className="text-sm text-muted-foreground">Healthy weight range</div>
@@ -455,7 +460,7 @@ export default function BMICalculator() {
 
             <div className="flex items-center justify-between p-3 border rounded-lg">
               <div>
-                <div className="font-medium text-orange-600">Overweight</div>
+                <div className="font-medium text-orange-600 dark:text-orange-400">Overweight</div>
                 <div className="text-sm text-muted-foreground">BMI 25.0 - 29.9</div>
               </div>
               <div className="text-sm text-muted-foreground">May need to lose weight</div>
@@ -463,7 +468,7 @@ export default function BMICalculator() {
 
             <div className="flex items-center justify-between p-3 border rounded-lg">
               <div>
-                <div className="font-medium text-red-600">Obese</div>
+                <div className="font-medium text-red-600 dark:text-red-400">Obese</div>
                 <div className="text-sm text-muted-foreground">BMI 30.0 and above</div>
               </div>
               <div className="text-sm text-muted-foreground">Consult healthcare provider</div>
@@ -471,19 +476,67 @@ export default function BMICalculator() {
           </div>
         </CardContent>
       </Card>
+      </>
+      )}
+
+      {compact && (
+      <Card>
+        <CardHeader>
+          <CardTitle
+            className="flex items-center justify-between gap-2 cursor-pointer text-base font-semibold"
+            onClick={() => setShowReferences(!showReferences)}
+          >
+            <span className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              About these metrics
+            </span>
+            {showReferences ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </CardTitle>
+        </CardHeader>
+        {showReferences && (
+          <CardContent className="space-y-4">
+            <div>
+              <h4 className="font-medium mb-2">Waist-to-Hip Ratio (WHR) Standards</h4>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>Men — Low Risk: WHR ≤ 0.90</p>
+                <p>Men — High Risk: WHR &gt; 0.90</p>
+                <p>Women — Low Risk: WHR ≤ 0.85</p>
+                <p>Women — High Risk: WHR &gt; 0.85</p>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-medium mb-2">Waist Circumference Thresholds</h4>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>Men: &lt; 94cm Low risk • 94-99cm Increased • ≥ 100cm High</p>
+                <p>Women: &lt; 80cm Low risk • 80-89cm Increased • ≥ 90cm High</p>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-medium mb-2">BMI Categories (WHO Standards)</h4>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>Underweight: &lt; 18.5</p>
+                <p>Normal Weight: 18.5 – 24.9</p>
+                <p>Overweight: 25.0 – 29.9</p>
+                <p>Obese: 30.0 and above</p>
+              </div>
+            </div>
+          </CardContent>
+        )}
+      </Card>
+      )}
 
       {/* Daily Calorie Recommendation */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-purple-600" />
+            <Target className="h-5 w-5 text-purple-600 dark:text-purple-400" />
             Daily Calorie Recommendation
           </CardTitle>
           <CardDescription>Based on your current profile</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center">
-            <div className="text-3xl font-bold mb-2">{dailyCalories}</div>
+            <div className="text-2xl font-bold mb-2">{dailyCalories}</div>
             <div className="text-muted-foreground mb-4">calories per day</div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
@@ -505,10 +558,10 @@ export default function BMICalculator() {
       </Card>
 
       {/* Important Note */}
-      <Card className="border-orange-200 bg-orange-50 dark:bg-orange-950">
+      <Card className="border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950">
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-orange-600 mt-0.5" />
+            <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400 mt-0.5" />
             <div>
               <h4 className="font-medium text-orange-800 dark:text-orange-200 mb-1">Important Note</h4>
               <p className="text-sm text-orange-700 dark:text-orange-300">

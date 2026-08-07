@@ -75,13 +75,14 @@ model User {
   updatedAt          DateTime  @updatedAt
   lastLoginAt        DateTime  @default(now())
 
-  profile       UserProfile?
-  stats         UserStats?
-  meals         Meal[]
-  waterIntakes  WaterIntake[]
-  sleepEntries  SleepEntry[]
-  predictions   FoodPrediction[]
-  bmiHistory    BMIHistory[]
+  profile         UserProfile?
+  stats           UserStats?
+  meals           Meal[]
+  waterIntakes    WaterIntake[]
+  sleepEntries    SleepEntry[]
+  activityEntries ActivityEntry[]
+  predictions     FoodPrediction[]
+  bmiHistory      BMIHistory[]
 
   @@index([email])
   @@index([role])
@@ -117,6 +118,8 @@ model UserProfile {
   avoidFoods            String[]
   mealPlanPreference    String?  @default("balanced_nigerian")
   supplementSuggestions String[]
+
+  waterGoal Float @default(2000)
 
   updatedAt DateTime @updatedAt
 
@@ -243,6 +246,23 @@ model SleepEntry {
   createdAt    DateTime     @default(now())
 
   @@unique([userId, date])
+  @@index([userId, date])
+}
+
+model ActivityEntry {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date           DateTime @db.Date
+  activityType   String
+  durationMin    Float
+  intensity      String
+  caloriesBurned Float
+  notes          String?
+  createdAt      DateTime @default(now())
+
+  // No unique on [userId, date]: unlike water/sleep totals, a user can log
+  // several separate activities in one day and they accumulate.
   @@index([userId, date])
 }
 
