@@ -2259,9 +2259,9 @@ Dockerized the complete application. A developer can clone, run `docker compose 
 
 | File | Purpose |
 |---|---|
-| `Dockerfile` | Multi-stage Next.js build (deps → builder → runner) |
+| `Dockerfile` | Multi-stage Next.js build (deps → builder → runner/migrate) |
 | `model-service/Dockerfile` | PyTorch base image + FastAPI |
-| `scripts/entrypoint.sh` | Prisma migrate + seed on container start |
+| `scripts/migrate.sh` | Prisma migrate + seed, run by the one-shot `migrate` service |
 | `.dockerignore` | Excludes node_modules, .next, .git, etc. |
 | `README.md` | Setup instructions, commands, architecture overview |
 

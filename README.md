@@ -72,3 +72,24 @@ Key variables:
 All endpoints under `/api/*`. See `docs/backend-contract.md` for full specification.
 
 Health check: `GET /api/health`
+
+## Production (VPS)
+
+The stack runs on a VPS via `docker-compose.yml` behind a Caddy reverse proxy with automatic TLS. Only Caddy exposes host ports; Postgres and the model service stay internal.
+
+```bash
+# One-time provisioning
+git clone https://github.com/Wolext4/nutritionapp2man.git ~/gluguide && cd ~/gluguide
+cp .env.example .env   # then set POSTGRES_PASSWORD, JWT_SECRET, DOMAIN
+
+# Start the stack (migrate runs migrations + seed before next-app starts)
+docker compose -f docker-compose.yml up -d
+```
+
+Deployments are automated: GitHub Actions builds the `next-app`, `next-app-migrate`, and `model-service` images on push to `main`, pushes them to GHCR tagged with the git SHA, then SSHes into the VPS to pull and restart. See `.github/workflows/deploy.yml`.
+
+Required repository secrets: `GHCR_TOKEN`, `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`.
+
+Database backups: `scripts/backup-db.sh` (wire into cron, see header comments).
+
+Full walkthrough (provisioning, secrets, DNS, CI, backups, troubleshooting): [`docs/vps-deployment.md`](docs/vps-deployment.md)

@@ -1,0 +1,100 @@
+name: Build & Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_BASE: ghcr.io/wolext4/nutritionapp2man
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Build & push next-app
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_BASE }}/next-app:${{ github.sha }}
+            ${{ env.IMAGE_BASE }}/next-app:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build & push migrate image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          target: migrate
+          push: true
+          tags: |
+            ${{ env.IMAGE_BASE }}/next-app-migrate:${{ github.sha }}
+            ${{ env.IMAGE_BASE }}/next-app-migrate:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build & push model-service
+        uses: docker/build-push-action@v6
+        with:
+          context: ./model-service
+          file: ./model-service/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_BASE }}/model-service:${{ github.sha }}
+            ${{ env.IMAGE_BASE }}/model-service:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure deploy directory on VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: mkdir -p ~/gluguide
+
+      - name: Copy compose file & Caddyfile to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "docker-compose.yml,Caddyfile"
+          target: "~/gluguide"
+
+      - name: Pull images & restart stack
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd ~/gluguide
+            docker compose -f docker-compose.yml pull
+            IMAGE_TAG=${{ github.sha }} docker compose -f docker-compose.yml up -d
+            docker image prune -f
