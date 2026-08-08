@@ -49,7 +49,7 @@ services:
     logging: *logging
 
   migrate:
-    image: ghcr.io/wolext4/nutritionapp2man/next-app-migrate:${IMAGE_TAG:-latest}
+    image: ghcr.io/n0vac0rp/nutritionapp2man/next-app-migrate:${IMAGE_TAG:-latest}
     build:
       context: .
       target: migrate
@@ -67,7 +67,7 @@ services:
     logging: *logging
 
   model-service:
-    image: ghcr.io/wolext4/nutritionapp2man/model-service:${IMAGE_TAG:-latest}
+    image: ghcr.io/n0vac0rp/nutritionapp2man/model-service:${IMAGE_TAG:-latest}
     build:
       context: ./model-service
     restart: unless-stopped
@@ -89,7 +89,7 @@ services:
     logging: *logging
 
   next-app:
-    image: ghcr.io/wolext4/nutritionapp2man/next-app:${IMAGE_TAG:-latest}
+    image: ghcr.io/n0vac0rp/nutritionapp2man/next-app:${IMAGE_TAG:-latest}
     build:
       context: .
     restart: unless-stopped

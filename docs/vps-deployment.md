@@ -103,7 +103,7 @@ Optional overrides used by the compose file: `POSTGRES_USER` (default `gluguide_
 echo <READ_ONLY_GITHUB_TOKEN> | docker login ghcr.io -u <github-username> --password-stdin
 ```
 
-Use a token with `read:packages` scope (or reuse the CI token for simplicity). It must match the owner of the image path: `ghcr.io/wolext4/nutritionapp2man/...`.
+Use a token with `read:packages` scope (or reuse the CI token for simplicity). It must match the owner of the image path: `ghcr.io/n0vac0rp/nutritionapp2man/...`.
 
 ## 5. First start
 
@@ -140,7 +140,7 @@ Repository secrets — Settings → Secrets and variables → Actions → New re
 Flow on every push to `main` (or manual `workflow_dispatch`):
 
 1. Build `next-app` + `next-app-migrate` + `model-service` images
-2. Push to `ghcr.io/wolext4/nutritionapp2man/{next-app,next-app-migrate,model-service}` tagged `git-SHA` and `latest`
+2. Push to `ghcr.io/n0vac0rp/nutritionapp2man/{next-app,next-app-migrate,model-service}` tagged `git-SHA` and `latest`
 3. `scp` `docker-compose.yml` + `Caddyfile` to `~/gluguide` on the VPS
 4. `docker compose pull` + `up -d`, prune stale images
 
