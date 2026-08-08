@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_BASE: ghcr.io/wolext4/nutritionapp2man
+  IMAGE_BASE: ghcr.io/n0vac0rp/nutritionapp2man
 
 jobs:
   build:
@@ -76,7 +76,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          script: mkdir -p ~/gluguide
+          script: mkdir -p /opt/gluguide
 
       - name: Copy compose file & Caddyfile to VPS
         uses: appleboy/scp-action@v0.1.7
@@ -85,7 +85,7 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           source: "docker-compose.yml,Caddyfile"
-          target: "~/gluguide"
+          target: "/opt/gluguide"
 
       - name: Pull images & restart stack
         uses: appleboy/ssh-action@v1.0.3
@@ -94,7 +94,7 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            cd ~/gluguide
-            docker compose -f docker-compose.yml pull
+            cd /opt/gluguide
+            IMAGE_TAG=${{ github.sha }} docker compose -f docker-compose.yml pull
             IMAGE_TAG=${{ github.sha }} docker compose -f docker-compose.yml up -d
             docker image prune -f
